@@ -10,6 +10,6 @@
 #include <unistd.h>
 
 void setup_ad_hoc(const std::string& ssid, const std::string& ip, const std::string& channel);
-bool check_setup_already_done(std::ofstream &adhoc_file);
+bool check_setup_already_done(std::ifstream &adhoc_file);
 
 #endif //PLATFORM_SETUP_AD_HOC_H

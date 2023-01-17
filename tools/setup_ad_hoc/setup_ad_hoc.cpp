@@ -21,8 +21,10 @@ void setup_ad_hoc(const std::string& ssid, const std::string& ip, const std::str
     newConfig << "wireless-mode ad-hoc" << std::endl;
     newConfig.close();
 
+    std::ifstream adhoc_file("interfaces.adhoc");
+
     // Check if the setup has already been done
-    if (check_setup_already_done(newConfig)) {
+    if (check_setup_already_done(adhoc_file)) {
         std::cout << "Setup already done. Skipping setup." << std::endl;
         return;
     }
@@ -47,14 +49,14 @@ void setup_ad_hoc(const std::string& ssid, const std::string& ip, const std::str
     system("sudo reboot");
 }
 
-bool check_setup_already_done(std::ofstream &adhoc_file){
+bool check_setup_already_done(std::ifstream &adhoc_file){
     std::ifstream interface_file("/etc/network/interfaces");
     std::string str;
-    if (interface_file.tellg() != adhoc_file.tellp()){
+    if (interface_file.tellg() != adhoc_file.tellg()){
         return false;
     }
     interface_file.seekg(0, std::ifstream ::beg);
-    adhoc_file.seekp(0, std::ofstream::beg);
+    adhoc_file.seekg(0, std::ofstream::beg);
     return std::equal(std::istreambuf_iterator<char>(interface_file.rdbuf()),
                       std::istreambuf_iterator<char>(),
                       std::istreambuf_iterator<char>(adhoc_file.rdbuf()));

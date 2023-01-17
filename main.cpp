@@ -48,7 +48,7 @@ int main(int argc, char *argv[]) {
 
     if (result.count("adhoc_reset")) {
         std::cout << "-- Reset ad-hoc network --" << std::endl << std::endl;
-        reset_ad_hoc();
+        //reset_ad_hoc();
     }
 
     if (result.count("config")) {
