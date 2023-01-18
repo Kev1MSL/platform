@@ -48,7 +48,8 @@ int main(int argc, char *argv[]) {
 
     if (result.count("adhoc_reset")) {
         std::cout << "-- Reset ad-hoc network --" << std::endl << std::endl;
-        if (!std::filesystem::exists("/etc/network/interfaces.bak")) {
+        std::ifstream adhoc_file("/etc/network/interfaces.bak");
+        if (!adhoc_file.good()) {
             std::cout << "No backup file found, exiting..." << std::endl;
             exit(1);
         }
