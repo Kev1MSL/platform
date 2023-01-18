@@ -73,6 +73,10 @@ int main(int argc, char *argv[]) {
             change_sensitivity(sensitivity);
         }
 
+    }else if (result.count("rate") || result.count("tx") || result.count("sensitivity")){
+        std::cout << "ERROR: Missing arguments." << std::endl;
+        std::cout << "Usage: " << argv[0] << " --config <option>" << std::endl;
+        exit(1);
     }
     return 0;
 }
