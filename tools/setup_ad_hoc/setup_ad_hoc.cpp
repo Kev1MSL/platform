@@ -4,6 +4,10 @@
 
 #include "setup_ad_hoc.h"
 
+/// Set up ad-hoc network on a raspberry pi by changing the interfaces file in the /etc/network directory
+/// \param ssid The ssid of the ad-hoc network
+/// \param ip The ip of the device
+/// \param channel The number of the channels
 void setup_ad_hoc(const std::string& ssid, const std::string& ip, const std::string& channel){
 
     // Create the new configuration file
@@ -29,6 +33,7 @@ void setup_ad_hoc(const std::string& ssid, const std::string& ip, const std::str
         return;
     }
 
+    // Stop the wireless interface
     system("sudo ifconfig wlan0 down");
 
 
@@ -37,19 +42,26 @@ void setup_ad_hoc(const std::string& ssid, const std::string& ip, const std::str
 
     // Change the network settings to ad-hoc mode
     system("sudo mv interfaces.adhoc /etc/network/interfaces");
+
     // Restart the network
     system("sudo ifconfig wlan0 up");
     system("sudo /etc/init.d/networking restart");
+
     // Print the new network settings
     std::cout << "New network settings:" << std::endl;
     system("cat /etc/network/interfaces");
 
+    // Reboot the raspberry pi after 10 seconds
     std::cout << std::endl << "Done! Reboot in 10 sec" << std::endl;
     sleep(10);
     system("sudo reboot");
 }
 
+/// Check if the ad hoc setup has already been done, i.e. if the configuration file interfaces in /etc/network/ is the same as the one we want to create
+/// \param adhoc_file The file we want to create.
+/// \return Returns true if the setup has already been done, false otherwise.
 bool check_setup_already_done(std::ifstream &adhoc_file){
+
     std::ifstream interface_file("/etc/network/interfaces");
     std::string str;
     if (interface_file.tellg() != adhoc_file.tellg()){
