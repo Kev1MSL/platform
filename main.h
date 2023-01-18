@@ -11,5 +11,6 @@
 #include "cxxopts.hpp"
 #include "tools/setup_ad_hoc/setup_ad_hoc.h"
 #include "tools/reset_ad_hoc/reset_ad_hoc.h"
+#include "tools/config/config.h"
 
 #endif //PLATFORM_MAIN_H

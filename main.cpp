@@ -60,17 +60,17 @@ int main(int argc, char *argv[]) {
         if (result.count("rate")){
             std::cout << "-- Set the bit rate --" << std::endl << std::endl;
             std::string rate = result["rate"].as<std::string>();
-            std::cout << "Rate: " << rate << std::endl;
+            change_rate(rate);
         }
         if (result.count("tx")){
             std::cout << "-- Set the transmitting power --" << std::endl << std::endl;
             std::string tx = result["tx"].as<std::string>();
-            std::cout << "Transmitting power: " << tx << std::endl;
+            change_tx_power(tx);
         }
         if (result.count("sensitivity")){
             std::cout << "-- Set the threshold for sensitivity --" << std::endl << std::endl;
             std::string sensitivity = result["sensitivity"].as<std::string>();
-            std::cout << "Threshold for sensitivity: " << sensitivity << std::endl;
+            change_sensitivity(sensitivity);
         }
 
     }
