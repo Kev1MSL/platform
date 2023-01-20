@@ -33,6 +33,9 @@ void setup_ad_hoc(const std::string& ssid, const std::string& ip, const std::str
         return;
     }
 
+    // Remove the interface from wpa_supplicant to avoid conflicts
+    system("echo \"denyinterfaces wlan0\" | sudo tee -a /etc/dhcpcd.conf");
+
     // Stop the wireless interface
     system("sudo ifconfig wlan0 down");
 
