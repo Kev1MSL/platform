@@ -10,9 +10,13 @@ compile_commands.json
 CTestTestfile.cmake
 _deps
 platform
+.vscode
+build
+temp_deb
+
 
 # Prerequisites
-*.d
+
 
 # Compiled Object files
 *.slo
