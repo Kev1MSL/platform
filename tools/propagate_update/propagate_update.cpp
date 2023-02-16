@@ -243,7 +243,7 @@ int ssh_updater::send_files(const std::string &from_path, const std::string &tar
         ssh_scp_free(scp);
         return rc;
     }
-
+    std::cout << "Sending files..." << std::endl;
     // Install each file one by one
     for (std::string filename : filenames)
     {
@@ -315,6 +315,9 @@ int ssh_updater::send_files(const std::string &from_path, const std::string &tar
         int nread;
         char buffer[16384];
         nread = fread(buffer, 1, sizeof(buffer), local);
+        if (nread == 0){
+            ssh_scp_write(scp, buffer, nread);
+        }
         while (nread > 0)
         {
             if (ssh_scp_write(scp, buffer, nread) != SSH_OK)

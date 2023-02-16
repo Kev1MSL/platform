@@ -73,8 +73,8 @@ int main(int argc, char *argv[])
         std::cout << "-- Setup monitor mode --" << std::endl
                   << std::endl;
         std::string iface = result["monitor_setup"].as<std::string>();
-        std::vector<std::string> unmatched = result.unmatched();
-        if (unmatched.size() != 0)
+        const std::vector<std::string>& unmatched = result.unmatched();
+        if (!unmatched.empty())
         {
             std::cout << "ERROR: Too many arguments." << std::endl;
             std::cout << "Usage: " << argv[0] << " --monitor_setup <interface>" << std::endl;
@@ -102,7 +102,7 @@ int main(int argc, char *argv[])
         if (dir[dir.size() - 1] == '/')
             dir = dir.substr(0, dir.size() - 1);
         std::vector<ssh_config> config = get_ssh_config(dir);
-        if (config.size() == 0)
+        if (config.empty())
         {
             std::cout << "ERROR: Unable to get the configuration of the Raspberry PI." << std::endl;
             exit(1);
@@ -111,22 +111,22 @@ int main(int argc, char *argv[])
         // Get the current IP address to skip it when propagating the update
         std::string ip = get_ip_address(iface);
 
-        for (size_t i = 0; i < config.size(); i++)
+        for (auto & i : config)
         {
-            if (config[i].host == ip)
+            if (i.host == ip)
             {
                 std::cout << "Skip " << ip << " because it is the current host." << std::endl;
                 continue;
             }
-            std::cout << "Begin to propagate update on " << config[i].host << std::endl;
-            ssh_updater updater = ssh_updater(config[i]);
-            if (updater.run_update(config[i].path) != 0)
+            std::cout << "Begin to propagate update on " << i.host << std::endl;
+            ssh_updater updater = ssh_updater(i);
+            if (updater.run_update(i.path) != 0)
             {
-                std::cout << "ERROR: Unable to propagate update on " << config[i].host << std::endl;
+                std::cout << "ERROR: Unable to propagate update on " << i.host << std::endl;
             }
             else
             {
-                std::cout << "Update successfully propagated on " << config[i].host << std::endl;
+                std::cout << "Update successfully propagated on " << i.host << std::endl;
             }
         }
     }
@@ -137,37 +137,37 @@ int main(int argc, char *argv[])
         std::cout << "-- Install a package --" << std::endl
                   << std::endl;
         std::vector<std::string> iface = result["install"].as<std::vector<std::string>>();
-        std::vector<std::string> packages = result.unmatched();
+        const std::vector<std::string>& packages = result.unmatched();
         std::vector<ssh_config> config = get_ssh_config();
-        if (packages.size() == 0)
+        if (packages.empty())
         {
             std::cout << "ERROR: Missing arguments." << std::endl;
             std::cout << "Usage: " << argv[0] << " --install <interface> <package(s)>" << std::endl;
             exit(1);
         }
-        if (config.size() == 0)
+        if (config.empty())
         {
             std::cout << "ERROR: Unable to get the configuration of the Raspberry PI." << std::endl;
             exit(1);
         }
         std::string ip = get_ip_address(iface[0]);
 
-        for (size_t i = 0; i < config.size(); i++)
+        for (auto & i : config)
         {
-            if (config[i].host == ip)
+            if (i.host == ip)
             {
                 std::cout << "Skip " << ip << " because it is the current host." << std::endl;
                 continue;
             }
-            std::cout << "Begin to propagate install package(s) on " << config[i].host << std::endl;
-            ssh_updater updater = ssh_updater(config[i]);
+            std::cout << "Begin to propagate install package(s) on " << i.host << std::endl;
+            ssh_updater updater = ssh_updater(i);
             if (updater.install_packages(packages) != 0)
             {
-                std::cout << "ERROR: Unable to propagate install package(s) on " << config[i].host << std::endl;
+                std::cout << "ERROR: Unable to propagate install package(s) on " << i.host << std::endl;
             }
             else
             {
-                std::cout << "Package(s) installation successfully propagated on " << config[i].host << std::endl;
+                std::cout << "Package(s) installation successfully propagated on " << i.host << std::endl;
             }
         }
     }
@@ -188,34 +188,39 @@ int main(int argc, char *argv[])
         std::string from_dir = unmatched[0];
         std::string to_dir = unmatched[1];
         std::vector<std::string> files = split(unmatched[2]);
-
+        if (from_dir.ends_with("/")){
+            from_dir = from_dir.substr(0, from_dir.size() - 1);
+        }
+        if (to_dir.ends_with("/")){
+            to_dir = to_dir.substr(0, to_dir.size() - 1);
+        }
         // In case of /* we need to add all files from the directory
         add_files_from_dir(&files, from_dir);
         std::cout << files.size() << " files to send." << std::endl;
         std::vector<ssh_config>
             config = get_ssh_config();
-        if (config.size() == 0)
+        if (config.empty())
         {
             std::cout << "ERROR: Unable to get the configuration of the Raspberry PI." << std::endl;
             exit(1);
         }
         std::string ip = get_ip_address(iface);
-        for (size_t i = 0; i < config.size(); i++)
+        for (auto & i : config)
         {
-            if (config[i].host == ip)
+            if (i.host == ip)
             {
                 std::cout << "Skip " << ip << " because it is the current host." << std::endl;
                 continue;
             }
-            std::cout << "Begin to propagate send files on " << config[i].host << std::endl;
-            ssh_updater updater = ssh_updater(config[i]);
+            std::cout << "Begin to propagate send files on " << i.host << std::endl;
+            ssh_updater updater = ssh_updater(i);
             if (updater.send_files(from_dir, to_dir, files) != 0)
             {
-                std::cout << "ERROR: Unable to propagate send files on " << config[i].host << std::endl;
+                std::cout << "ERROR: Unable to propagate send files on " << i.host << std::endl;
             }
             else
             {
-                std::cout << "Files successfully propagated on " << config[i].host << std::endl;
+                std::cout << "Files successfully propagated on " << i.host << std::endl;
             }
         }
     }
@@ -233,35 +238,35 @@ int main(int argc, char *argv[])
             std::cout << "Usage: " << argv[0] << " --run <interface to use> <command>" << std::endl;
             exit(1);
         }
-        std::string command = "";
-        for (size_t i = 0; i < unmatched.size(); i++)
+        std::string command;
+        for (const auto & i : unmatched)
         {
-            command += unmatched[i] + " ";
+            command += i + " ";
         }
         std::vector<ssh_config>
             config = get_ssh_config();
-        if (config.size() == 0)
+        if (config.empty())
         {
             std::cout << "ERROR: Unable to get the configuration of the Raspberry PI." << std::endl;
             exit(1);
         }
         std::string ip = get_ip_address(iface);
-        for (size_t i = 0; i < config.size(); i++)
+        for (auto & i : config)
         {
-            if (config[i].host == ip)
+            if (i.host == ip)
             {
                 std::cout << "Skip " << ip << " because it is the current host." << std::endl;
                 continue;
             }
-            std::cout << "Begin to propagate run command on " << config[i].host << std::endl;
-            ssh_updater updater = ssh_updater(config[i]);
+            std::cout << "Begin to propagate run command on " << i.host << std::endl;
+            ssh_updater updater = ssh_updater(i);
             if (updater.run_command(command) != 0)
             {
-                std::cout << "ERROR: Unable to propagate run command on " << config[i].host << std::endl;
+                std::cout << "ERROR: Unable to propagate run command on " << i.host << std::endl;
             }
             else
             {
-                std::cout << "Command successfully propagated on " << config[i].host << std::endl;
+                std::cout << "Command successfully propagated on " << i.host << std::endl;
             }
         }
     }
@@ -314,7 +319,7 @@ std::vector<ssh_config> get_ssh_config(const std::string &path)
     if (!rpi_config_file.good())
     {
         std::cout << "ERROR: Unable to open devices.json" << std::endl;
-        return std::vector<ssh_config>();
+        return {};
     }
     Json::Value rpi_config;
     rpi_config_file >> rpi_config;
@@ -345,7 +350,7 @@ std::string get_ip_address(const std::string &iface)
     // Get the IP address of the interface
     // Original code from https://www.geekpage.jp/en/programming/linux-network/get-ipaddr.php
     int sock = socket(AF_INET, SOCK_DGRAM, 0);
-    struct ifreq ifr;
+    struct ifreq ifr{};
     ifr.ifr_addr.sa_family = AF_INET;
     strncpy(ifr.ifr_name, iface.c_str(), IFNAMSIZ - 1);
     ioctl(sock, SIOCGIFADDR, &ifr);
