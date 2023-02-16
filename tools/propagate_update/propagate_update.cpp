@@ -229,7 +229,7 @@ int ssh_updater::send_files(const std::string &from_path, const std::string &tar
     ssh_scp scp;
     int rc;
     scp = ssh_scp_new(this->session, SSH_SCP_WRITE | SSH_SCP_RECURSIVE, target_path.c_str());
-    if (scp == NULL)
+    if (scp == nullptr)
     {
         fprintf(stderr, "Error allocating scp session: %s\n",
                 ssh_get_error(this->session));
@@ -250,7 +250,7 @@ int ssh_updater::send_files(const std::string &from_path, const std::string &tar
         // Clean the filename from any leading or trailing slashes and store it in filepath
         std::string filepath;
 
-        // Check if their is a leading slash
+        // Check if there is a leading slash
         if (filename[0] == '/')
             filepath = filename.substr(1);
         else
@@ -290,9 +290,9 @@ int ssh_updater::send_files(const std::string &from_path, const std::string &tar
             filepath = from_path + "/" + filepath;
 
         FILE *local = fopen(filepath.c_str(), "r");
-        struct stat file_stat;
+        struct stat file_stat{};
         stat(filepath.c_str(), &file_stat);
-        if (local == NULL)
+        if (local == nullptr)
         {
             fprintf(stderr, "Can't open local file %s: %s\n",
                     filepath.c_str(), strerror(errno));

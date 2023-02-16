@@ -7,6 +7,12 @@
 
 
 class packet_analyzer {
+public:
+    packet_analyzer();
+    ~packet_analyzer();
+
+private:
+
 
 };
 

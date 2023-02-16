@@ -15,6 +15,7 @@ build
 temp_deb
 .VSCodeCounter
 .idea
+cmake-build-debug
 # Prerequisites
 
 
