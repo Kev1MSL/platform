@@ -13,8 +13,8 @@ platform
 .vscode
 build
 temp_deb
-
-
+.VSCodeCounter
+.idea
 # Prerequisites
 
 

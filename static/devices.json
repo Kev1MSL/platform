@@ -6,7 +6,7 @@
 			"RPI_USER": "pi",
 			"RPI_PASS": "raspberry",
 			"RPI_IP": "192.168.1.1",
-			"RPI_STATUS": "ON"
+			"RPI_STATUS": "OFF"
 		},
 		{
 			"RPI": "RPI_2",
