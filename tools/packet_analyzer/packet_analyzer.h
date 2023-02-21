@@ -43,10 +43,6 @@ private:
 
     static std::string getProtocolTypeAsString(pcpp::ProtocolType protocolType);
 
-/*    static uint8_t get_byte_from_packet(const uint8_t *data, int max_length, int offset);
-
-    static std::vector<uint8_t>
-    get_bytes_from_packet(const uint8_t *data, int max_length, int begin_offset, int end_offset);*/
 };
 
 #endif // PLATFORM_PACKET_ANALYZER_H
