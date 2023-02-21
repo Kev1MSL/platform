@@ -8,10 +8,36 @@ int main(int argc, char *argv[])
 
     // Use cxxopts to parse the arguments
     cxxopts::Options options("platform", "");
-    options.add_options()("h,help", "Print this help message")("a,adhoc_setup", "Change the Raspberry PI network settings to ad-hoc mode", cxxopts::value<std::vector<std::string>>(), "<ssid> <ip> <number of channels>")("r,adhoc_reset", "Reset the Raspberry PI network settings to default")("m,monitor_setup", "Set up the interface into monitor mode", cxxopts::value<std::string>(), "<interface>")("s,start", "Start a protocol", cxxopts::value<std::string>(), "<protocol>")("c,config", "Configure an option of the Raspberry PI wireless card", cxxopts::value<bool>(), "<option>");
-    options.add_options("Packet analysis")("P,print", "Print info for an interface", cxxopts::value<std::string>(), "<interface>")("C,capture", "Capture packets on an interface", cxxopts::value<std::string>(), "<interface>");
-    options.add_options("Propagate remote operations")("p,propagate", "Propagate updates of files in directory over the network", cxxopts::value<std::vector<std::string>>(), "<interface to use> <platform's directory>")("i,install", "Install a package on the Raspberry PI", cxxopts::value<std::vector<std::string>>(), "<interface to use> <package name(s)>")("S,send", "Send files to the Raspberry PI", cxxopts::value<std::vector<std::string>>(), "<interface to use> <from directory> <to directory> \"<file(s)>\"")("R,run", "Run command on all the Raspberry PIs", cxxopts::value<std::vector<std::string>>(), "<interface to use> <command>");
-    options.add_options("List of configuration")("rate", "Set the bit rate", cxxopts::value<std::string>(), "<rate>")("tx", "Set the transmitting power", cxxopts::value<std::string>(), "<power in dBm or mW>")("sensitivity", "Set the threshold for sensitivity", cxxopts::value<std::string>(), "<threshold>");
+    options.add_options()("h,help", "Print this help message")("a,adhoc_setup",
+                                                               "Change the Raspberry PI network settings to ad-hoc mode",
+                                                               cxxopts::value<std::vector<std::string>>(),
+                                                               "<ssid> <ip> <number of channels>")("r,adhoc_reset",
+                                                                                                   "Reset the Raspberry PI network settings to default")(
+            "m,monitor_setup", "Set up the interface into monitor mode", cxxopts::value<std::string>(), "<interface>")(
+            "s,start", "Start a protocol", cxxopts::value<std::string>(), "<protocol>")("c,config",
+                                                                                        "Configure an option of the Raspberry PI wireless card",
+                                                                                        cxxopts::value<bool>(),
+                                                                                        "<option>");
+    options.add_options("Packet analysis")("P,print", "Print info for an interface", cxxopts::value<std::string>(),
+                                           "<interface>")("C,capture", "Capture packets on an interface",
+                                                          cxxopts::value<std::string>(), "<interface>");
+    options.add_options("Propagate remote operations")("p,propagate",
+                                                       "Propagate updates of files in directory over the network",
+                                                       cxxopts::value<std::vector<std::string>>(),
+                                                       "<interface to use> <platform's directory>")("i,install",
+                                                                                                    "Install a package on the Raspberry PI",
+                                                                                                    cxxopts::value<std::vector<std::string>>(),
+                                                                                                    "<interface to use> <package name(s)>")(
+            "S,send", "Send files to the Raspberry PI", cxxopts::value<std::vector<std::string>>(),
+            "<interface to use> <from directory> <to directory> \"<file(s)>\"")("R,run",
+                                                                                "Run command on all the Raspberry PIs",
+                                                                                cxxopts::value<std::vector<std::string>>(),
+                                                                                "<interface to use> <command>");
+    options.add_options("List of configuration")("rate", "Set the bit rate", cxxopts::value<std::string>(), "<rate>")(
+            "tx", "Set the transmitting power", cxxopts::value<std::string>(), "<power in dBm or mW>")("sensitivity",
+                                                                                                       "Set the threshold for sensitivity",
+                                                                                                       cxxopts::value<std::string>(),
+                                                                                                       "<threshold>");
 
     options.allow_unrecognised_options();
     if (argc < 2)
@@ -114,7 +140,7 @@ int main(int argc, char *argv[])
         // Get the current IP address to skip it when propagating the update
         std::string ip = get_ip_address(iface);
 
-        for (auto &i : config)
+        for (auto &i: config)
         {
             if (i.host == ip)
             {
@@ -126,8 +152,7 @@ int main(int argc, char *argv[])
             if (updater.run_update(i.path) != 0)
             {
                 std::cout << "ERROR: Unable to propagate update on " << i.host << std::endl;
-            }
-            else
+            } else
             {
                 std::cout << "Update successfully propagated on " << i.host << std::endl;
             }
@@ -155,7 +180,7 @@ int main(int argc, char *argv[])
         }
         std::string ip = get_ip_address(iface[0]);
 
-        for (auto &i : config)
+        for (auto &i: config)
         {
             if (i.host == ip)
             {
@@ -167,8 +192,7 @@ int main(int argc, char *argv[])
             if (updater.install_packages(packages) != 0)
             {
                 std::cout << "ERROR: Unable to propagate install package(s) on " << i.host << std::endl;
-            }
-            else
+            } else
             {
                 std::cout << "Package(s) installation successfully propagated on " << i.host << std::endl;
             }
@@ -185,7 +209,8 @@ int main(int argc, char *argv[])
         if (unmatched.size() != 3)
         {
             std::cout << "ERROR: Missing arguments." << std::endl;
-            std::cout << "Usage: " << argv[0] << " --send <interface to use> <from directory> <to directory> \"<file(s)>\"" << std::endl;
+            std::cout << "Usage: " << argv[0]
+                      << " --send <interface to use> <from directory> <to directory> \"<file(s)>\"" << std::endl;
             exit(1);
         }
         std::string from_dir = unmatched[0];
@@ -203,14 +228,14 @@ int main(int argc, char *argv[])
         add_files_from_dir(&files, from_dir);
         std::cout << files.size() << " files to send." << std::endl;
         std::vector<ssh_config>
-            config = get_ssh_config();
+                config = get_ssh_config();
         if (config.empty())
         {
             std::cout << "ERROR: Unable to get the configuration of the Raspberry PI." << std::endl;
             exit(1);
         }
         std::string ip = get_ip_address(iface);
-        for (auto &i : config)
+        for (auto &i: config)
         {
             if (i.host == ip)
             {
@@ -222,8 +247,7 @@ int main(int argc, char *argv[])
             if (updater.send_files(from_dir, to_dir, files) != 0)
             {
                 std::cout << "ERROR: Unable to propagate send files on " << i.host << std::endl;
-            }
-            else
+            } else
             {
                 std::cout << "Files successfully propagated on " << i.host << std::endl;
             }
@@ -244,19 +268,19 @@ int main(int argc, char *argv[])
             exit(1);
         }
         std::string command;
-        for (const auto &i : unmatched)
+        for (const auto &i: unmatched)
         {
             command += i + " ";
         }
         std::vector<ssh_config>
-            config = get_ssh_config();
+                config = get_ssh_config();
         if (config.empty())
         {
             std::cout << "ERROR: Unable to get the configuration of the Raspberry PI." << std::endl;
             exit(1);
         }
         std::string ip = get_ip_address(iface);
-        for (auto &i : config)
+        for (auto &i: config)
         {
             if (i.host == ip)
             {
@@ -268,8 +292,7 @@ int main(int argc, char *argv[])
             if (updater.run_command(command) != 0)
             {
                 std::cout << "ERROR: Unable to propagate run command on " << i.host << std::endl;
-            }
-            else
+            } else
             {
                 std::cout << "Command successfully propagated on " << i.host << std::endl;
             }
@@ -336,8 +359,7 @@ int main(int argc, char *argv[])
             std::string sensitivity = result["sensitivity"].as<std::string>();
             change_sensitivity(sensitivity);
         }
-    }
-    else if (result.count("rate") || result.count("tx") || result.count("sensitivity"))
+    } else if (result.count("rate") || result.count("tx") || result.count("sensitivity"))
     {
         std::cout << "ERROR: Missing arguments." << std::endl;
         std::cout << "Usage: " << argv[0] << " --config <option>" << std::endl;
@@ -387,14 +409,14 @@ std::string get_ip_address(const std::string &iface)
     // Original code from https://www.geekpage.jp/en/programming/linux-network/get-ipaddr.php
     int sock = socket(AF_INET, SOCK_DGRAM, 0);
     struct ifreq ifr
-    {
-    };
+            {
+            };
     ifr.ifr_addr.sa_family = AF_INET;
     strncpy(ifr.ifr_name, iface.c_str(), IFNAMSIZ - 1);
     ioctl(sock, SIOCGIFADDR, &ifr);
     close(sock);
 
-    return inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr);
+    return inet_ntoa(((struct sockaddr_in *) &ifr.ifr_addr)->sin_addr);
 }
 
 /// @brief Helper function to split a string into a vector of strings with space delimiter.

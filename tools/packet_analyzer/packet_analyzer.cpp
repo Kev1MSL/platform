@@ -114,7 +114,40 @@ void packet_analyzer::parse_packets()
     }
     std::cout << std::endl << "Differences between ICMP packets: " << std::endl;
     std::vector<std::pair<icmp_analyzer_packet, icmp_analyzer_packet>> icmp_packets = adapter.get_icmp_req_rep_list();
-    for (int i = 0; i < icmp_packets.size(); ++i)
+    for (std::pair<icmp_analyzer_packet, icmp_analyzer_packet> packet: icmp_packets)
+    {
+        tabulate::Table table;
+        table.add_row({"", "ICMP Request", "ICMP Reply"});
+        table.add_row({"Sequence number", std::to_string(packet.first.get_sequence_number()),
+                       std::to_string(packet.second.get_sequence_number())});
+        std::stringstream ss;
+        ss << std::hex << packet.first.get_id_number();
+        table.add_row({"ID number", "0x" + ss.str() + " | " + std::to_string(packet.first.get_id_number()),
+                       "0x" + ss.str() + " | " + std::to_string(packet.second.get_id_number())});
+        table.add_row({"Signal strength", std::to_string(packet.first.get_signal_strength()) + " dBm",
+                       std::to_string(packet.second.get_signal_strength()) + " dBm"});
+        table.add_row({"ICMP time", packet.first.print_time_icmp_sent(), packet.second.print_time_icmp_sent()});
+        table.add_row({"Captured time", packet.first.print_time_captured(), packet.second.print_time_captured()});
+        table.add_row({"WLAN duration", std::to_string(packet.first.get_wlan_duration()) + " µs",
+                       std::to_string(packet.second.get_wlan_duration()) + " µs"});
+
+        auto diff = std::chrono::duration_cast<std::chrono::nanoseconds>(
+                packet.second.get_captured_time() - packet.first.get_captured_time()).count() /
+                    1000;
+        float diff_f = diff / 1000.0;
+
+        tabulate::Table difference;
+        std::stringstream ss_diff;
+        ss_diff << std::dec << std::setprecision(6) << diff_f;
+        table.add_row({"Difference", ss_diff.str() + " ms", ss_diff.str() + " ms"});
+        table.format().font_align(tabulate::FontAlign::center);
+        table.row(6).format().multi_byte_characters(true);
+        std::cout << table << std::endl << std::endl << std::endl;
+/*        std::cout << "Packet " << packet.first.get_sequence_number() << ": "
+                  << std::setprecision(6) << diff_f << " ms"
+                  << std::endl;*/
+    }
+/*    for (int i = 0; i < icmp_packets.size(); ++i)
     {
         auto diff = std::chrono::duration_cast<std::chrono::nanoseconds>(
                 icmp_packets[i].second.get_captured_time() - icmp_packets[i].first.get_captured_time()).count() /
@@ -123,7 +156,7 @@ void packet_analyzer::parse_packets()
         std::cout << "Packet " << i << ": "
                   << std::setprecision(6) << diff_f << " ms"
                   << std::endl;
-    }
+    }*/
 #else
     std::cout << "----------------------------------" << std::endl;
     std::cout << "Packet incoming" << std::endl;

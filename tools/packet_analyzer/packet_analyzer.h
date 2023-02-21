@@ -18,6 +18,7 @@
 #include "pcapplusplus/IcmpLayer.h"
 #include <tuple>
 #include "icmp_analyzer.h"
+#include <tabulate/table.hpp>
 
 #define IS_MONITOR_MODE 1
 

@@ -32,5 +32,6 @@ add_executable(
         tools/packet_analyzer/packet_analyzer.h tools/packet_analyzer/icmp_analyzer.cpp tools/packet_analyzer/icmp_analyzer.h)
 
 add_subdirectory(extern/cxxopts)
-target_include_directories(${PROJECT_NAME} PUBLIC cxxopts)
-target_link_libraries(${PROJECT_NAME} PUBLIC cxxopts jsoncpp ssh PcapPlusPlus::PcapPlusPlus)
+add_subdirectory(extern/tabulate)
+target_include_directories(${PROJECT_NAME} PUBLIC cxxopts tabulate)
+target_link_libraries(${PROJECT_NAME} PUBLIC cxxopts jsoncpp ssh PcapPlusPlus::PcapPlusPlus tabulate)
