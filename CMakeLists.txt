@@ -9,12 +9,12 @@ find_package(libssh REQUIRED)
 find_package(jsoncpp REQUIRED)
 find_package(PcapPlusPlus REQUIRED)
 if (NOT TARGET ssh)
-     add_library(ssh SHARED IMPORTED)
-     set_target_properties(ssh
-                           PROPERTIES
-                           IMPORTED_LOCATION "${LIBSSH_LIBRARIES}"
-                           INTERFACE_INCLUDE_DIRECTORIES "${LIBSSH_INCLUDE_DIR}")
-endif()
+    add_library(ssh SHARED IMPORTED)
+    set_target_properties(ssh
+            PROPERTIES
+            IMPORTED_LOCATION "${LIBSSH_LIBRARIES}"
+            INTERFACE_INCLUDE_DIRECTORIES "${LIBSSH_INCLUDE_DIR}")
+endif ()
 
 add_executable(
         platform main.cpp main.h
@@ -29,8 +29,8 @@ add_executable(
         tools/propagate_update/propagate_update.cpp
         tools/propagate_update/propagate_update.h
         tools/packet_analyzer/packet_analyzer.cpp
-        tools/packet_analyzer/packet_analyzer.h)
+        tools/packet_analyzer/packet_analyzer.h tools/packet_analyzer_tins.cpp tools/packet_analyzer_tins.h tools/packet_analyzer/icmp_analyzer.cpp tools/packet_analyzer/icmp_analyzer.h)
 
 add_subdirectory(extern/cxxopts)
 target_include_directories(${PROJECT_NAME} PUBLIC cxxopts)
-target_link_libraries(${PROJECT_NAME} PUBLIC cxxopts jsoncpp ssh PcapPlusPlus::PcapPlusPlus)
+target_link_libraries(${PROJECT_NAME} PUBLIC cxxopts jsoncpp ssh PcapPlusPlus::PcapPlusPlus -ltins)

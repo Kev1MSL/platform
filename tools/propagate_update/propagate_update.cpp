@@ -59,7 +59,7 @@ int ssh_updater::run_update(const std::string &path)
               << std::endl;
 
     // Install the required packages for the platform project
-    if (ssh_updater::install_packages({"git", "cmake", "libssh-dev", "libjsoncpp-dev"}) != 0)
+    if (ssh_updater::install_packages({"git", "cmake", "libssh-dev", "libjsoncpp-dev", "libpcap-dev"}) != 0)
     {
         std::cout << "Error while installing packages" << std::endl;
         return -1;
@@ -84,7 +84,8 @@ int ssh_updater::run_update(const std::string &path)
     }
 
     // Remove the CMakeCache.txt file to force a rebuild of the project, then build the project with cmake and make
-    if (ssh_updater::run_command("cd Documents/Kevin_Bachelor_Thesis/platform && rm -rf CMakeCache.txt && cmake . && make") != 0)
+    if (ssh_updater::run_command(
+            "cd Documents/Kevin_Bachelor_Thesis/platform && rm -rf CMakeCache.txt && cmake . && make") != 0)
     {
         std::cout << "Error while building" << std::endl;
         return -1;
@@ -127,7 +128,7 @@ int ssh_updater::run_command(const std::string &command)
     nbytes = ssh_channel_read(channel, buffer, sizeof(buffer), 0);
     while (nbytes > 0)
     {
-        if (write(1, buffer, nbytes) != (int)nbytes)
+        if (write(1, buffer, nbytes) != (int) nbytes)
         {
             ssh_channel_close(channel);
             ssh_channel_free(channel);
@@ -171,14 +172,16 @@ int ssh_updater::install_packages(const std::vector<std::string> &packages)
 
     // Set the packages as a string
     std::string packages_string = "";
-    for (std::string package : packages)
+    for (std::string package: packages)
     {
         packages_string += package + " ";
     }
 
     // Create a local directory to store the packages and their dependencies that we will download
     std::filesystem::create_directory("temp_deb");
-    std::string command = "cd temp_deb && apt-get download $(apt-cache depends --recurse --no-recommends --no-suggests --no-conflicts --no-breaks --no-replaces --no-enhances " + packages_string + " | grep \"^\\w\" | sort -u)";
+    std::string command =
+            "cd temp_deb && apt-get download $(apt-cache depends --recurse --no-recommends --no-suggests --no-conflicts --no-breaks --no-replaces --no-enhances " +
+            packages_string + " | grep \"^\\w\" | sort -u)";
     system(command.c_str());
     command = "cd temp_deb && dpkg-scanpackages . | gzip -9c > Packages.gz";
     system(command.c_str());
@@ -188,9 +191,11 @@ int ssh_updater::install_packages(const std::vector<std::string> &packages)
     std::vector<std::string> filenames;
 
     // Get all the filenames in the directory temp_deb
-    for (const auto &entry : std::filesystem::directory_iterator(temp_deb_directory_path))
+    for (const auto &entry: std::filesystem::directory_iterator(temp_deb_directory_path))
     {
-        std::string relative_path = entry.path().string().substr(temp_deb_directory_path.length() + 1, entry.path().string().length() - temp_deb_directory_path.length() - 1);
+        std::string relative_path = entry.path().string().substr(temp_deb_directory_path.length() + 1,
+                                                                 entry.path().string().length() -
+                                                                 temp_deb_directory_path.length() - 1);
         filenames.push_back(relative_path);
     }
 
@@ -223,7 +228,8 @@ int ssh_updater::install_packages(const std::vector<std::string> &packages)
 /// @param target_path Path of the directory on the remote machine to which the files will be sent.
 /// @param filenames List of filenames to send.
 /// @return 0 if the files were sent successfully, -1 otherwise.
-int ssh_updater::send_files(const std::string &from_path, const std::string &target_path, const std::vector<std::string> &filenames)
+int ssh_updater::send_files(const std::string &from_path, const std::string &target_path,
+                            const std::vector<std::string> &filenames)
 {
     // Initialize scp session
     ssh_scp scp;
@@ -245,7 +251,7 @@ int ssh_updater::send_files(const std::string &from_path, const std::string &tar
     }
     std::cout << "Sending files..." << std::endl;
     // Install each file one by one
-    for (std::string filename : filenames)
+    for (std::string filename: filenames)
     {
         // Clean the filename from any leading or trailing slashes and store it in filepath
         std::string filepath;
@@ -270,7 +276,7 @@ int ssh_updater::send_files(const std::string &from_path, const std::string &tar
         if (is_dir)
         {
             // Create the directories on the remote machine recursively
-            for (std::string sub_dir : directories)
+            for (std::string sub_dir: directories)
             {
                 // Add the right permissions that are needed to create the directory, usually executable for all
                 rc = ssh_scp_push_directory(scp, sub_dir.c_str(), S_IRWXU | S_IXGRP | S_IRGRP | S_IXOTH);
@@ -315,7 +321,8 @@ int ssh_updater::send_files(const std::string &from_path, const std::string &tar
         int nread;
         char buffer[16384];
         nread = fread(buffer, 1, sizeof(buffer), local);
-        if (nread == 0){
+        if (nread == 0)
+        {
             ssh_scp_write(scp, buffer, nread);
         }
         while (nread > 0)
@@ -356,14 +363,13 @@ std::vector<std::string> ssh_updater::split_dir(const std::string &path)
 {
     std::vector<std::string> directories;
     std::string current = "";
-    for (char c : path)
+    for (char c: path)
     {
         if (c == '/')
         {
             directories.push_back(current);
             current = "";
-        }
-        else
+        } else
         {
             current += c;
         }
@@ -390,13 +396,15 @@ void add_files_from_dir(std::vector<std::string> *files, const std::string &path
                 dir = path + "/" + files->at(i).substr(0, files->at(i).find("/*"));
 
             // Use the filesystem library and the recursive_directory_iterator to get all files recursively. Then add them to the vector.
-            for (const auto &entry : std::filesystem::recursive_directory_iterator(dir))
+            for (const auto &entry: std::filesystem::recursive_directory_iterator(dir))
             {
                 struct stat st;
                 stat(entry.path().string().c_str(), &st);
                 if (S_ISDIR(st.st_mode))
                     continue;
-                std::string relative_path = entry.path().string().substr(path.length() + 1, entry.path().string().length() - path.length() - 1);
+                std::string relative_path = entry.path().string().substr(path.length() + 1,
+                                                                         entry.path().string().length() -
+                                                                         path.length() - 1);
                 files->push_back(relative_path);
             }
             // Remove the wildcard from the vector

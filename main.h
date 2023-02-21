@@ -19,10 +19,15 @@
 #include "tools/set_monitor_mode/set_monitor_mode.h"
 #include "tools/config/config.h"
 #include "tools/propagate_update/propagate_update.h"
+#include "tools/packet_analyzer/packet_analyzer.h"
 
 std::vector<ssh_config> get_ssh_config(const std::string &path = PATH);
+
 std::string get_ip_address(const std::string &iface);
+
 std::vector<std::string> split(const std::string &str);
-void add_files_from_dir(std::vector<std::string> *files, const std::string &path);
+
+//void add_files_from_dir(std::vector<std::string> *files, const std::string &path);
+bool is_root();
 
 #endif /* MAIN */
