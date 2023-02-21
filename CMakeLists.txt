@@ -29,8 +29,8 @@ add_executable(
         tools/propagate_update/propagate_update.cpp
         tools/propagate_update/propagate_update.h
         tools/packet_analyzer/packet_analyzer.cpp
-        tools/packet_analyzer/packet_analyzer.h tools/packet_analyzer_tins.cpp tools/packet_analyzer_tins.h tools/packet_analyzer/icmp_analyzer.cpp tools/packet_analyzer/icmp_analyzer.h)
+        tools/packet_analyzer/packet_analyzer.h tools/packet_analyzer/icmp_analyzer.cpp tools/packet_analyzer/icmp_analyzer.h)
 
 add_subdirectory(extern/cxxopts)
 target_include_directories(${PROJECT_NAME} PUBLIC cxxopts)
-target_link_libraries(${PROJECT_NAME} PUBLIC cxxopts jsoncpp ssh PcapPlusPlus::PcapPlusPlus -ltins)
+target_link_libraries(${PROJECT_NAME} PUBLIC cxxopts jsoncpp ssh PcapPlusPlus::PcapPlusPlus)

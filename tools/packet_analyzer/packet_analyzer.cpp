@@ -87,9 +87,10 @@ void packet_analyzer::stop_capture()
 
 void packet_analyzer::parse_packets()
 {
+    icmp_analyzer_adapter adapter;
     for (auto packet: this->packet_vector)
     {
-        bool is_icmp_req =
+        /*bool is_icmp_req =
                 icmp_analyzer_packet::get_byte_from_packet(packet->getRawData(), packet->getRawDataLen(), 83) == 0x8 &&
                 icmp_analyzer_packet::get_byte_from_packet(packet->getRawData(), packet->getRawDataLen(), 84) == 0x0 &&
                 icmp_analyzer_packet::get_byte_from_packet(packet->getRawData(), packet->getRawDataLen(), 29) == 0x88;
@@ -97,59 +98,63 @@ void packet_analyzer::parse_packets()
                 icmp_analyzer_packet::get_byte_from_packet(packet->getRawData(), packet->getRawDataLen(), 83) == 0x0 &&
                 icmp_analyzer_packet::get_byte_from_packet(packet->getRawData(), packet->getRawDataLen(), 84) == 0x0 &&
                 icmp_analyzer_packet::get_byte_from_packet(packet->getRawData(), packet->getRawDataLen(), 29) == 0x88;
+        pcpp::Packet parsedPacket(packet);*/
         pcpp::Packet parsedPacket(packet);
+        icmp_analyzer_packet icmp_packet
+                (parsedPacket.getRawPacket()->getRawData(),
+                 parsedPacket.getRawPacket()->getRawDataLen(),
+                 parsedPacket.getRawPacket()->getPacketTimeStamp());
 
 #if IS_MONITOR_MODE == 1
-        if (!is_icmp_req && !is_icmp_rep)
-        {
+        if (!icmp_packet.is_icmp_packet())
             continue;
-        }
         std::cout << "----------------------------------" << std::endl;
-        std::cout << "ICMP " << (is_icmp_req ? "Request" : "Reply") << std::endl;
-        int signal_strength = (int8_t) icmp_analyzer_packet::get_byte_from_packet(packet->getRawData(),
-                                                                                  packet->getRawDataLen(), 22);
+        adapter.add_icmp_packet(icmp_packet);
+        std::cout << "ICMP " << (icmp_packet.get_icmp_type() == ICMP_REQUEST ? "Request" : "Reply") << std::endl;
+        /*int signal_strength = (int8_t) icmp_analyzer_packet::get_byte_from_packet(packet->getRawData(),
+                                                                                  packet->getRawDataLen(), 22);*/
 
-        std::cout << "Signal strength: " << signal_strength << std::endl;
-        std::vector<uint8_t> raw_seq_number = icmp_analyzer_packet::get_bytes_from_packet(packet->getRawData(),
+        std::cout << "Signal strength: " << icmp_packet.get_signal_strength() << std::endl;
+        /*std::vector<uint8_t> raw_seq_number = icmp_analyzer_packet::get_bytes_from_packet(packet->getRawData(),
                                                                                           packet->getRawDataLen(), 89,
                                                                                           91);
-        u_int16_t sequence_number = ((uint16_t) raw_seq_number[0] << 8) | raw_seq_number[1];
-        std::cout << "Sequence number: " << sequence_number << std::endl;
+        u_int16_t sequence_number = ((uint16_t) raw_seq_number[0] << 8) | raw_seq_number[1];*/
+        std::cout << "Sequence number: " << icmp_packet.get_sequence_number() << std::endl;
 
-        std::vector<uint8_t> raw_id_number = icmp_analyzer_packet::get_bytes_from_packet(packet->getRawData(),
+        /*std::vector<uint8_t> raw_id_number = icmp_analyzer_packet::get_bytes_from_packet(packet->getRawData(),
                                                                                          packet->getRawDataLen(), 87,
                                                                                          89);
-        u_int16_t id_number = ((uint16_t) raw_id_number[0] << 8) | raw_id_number[1];
+        u_int16_t id_number = ((uint16_t) raw_id_number[0] << 8) | raw_id_number[1];*/
         std::stringstream ss;
-        ss << std::hex << id_number;
-        std::cout << "ID number: 0x" << ss.str() << " | " << id_number << std::endl;
+        ss << std::hex << icmp_packet.get_id_number();
+        std::cout << "ID number: 0x" << ss.str() << " | " << icmp_packet.get_id_number() << std::endl;
 
-        std::vector<uint8_t> raw_timestamp = icmp_analyzer_packet::get_bytes_from_packet(packet->getRawData(),
+        /*std::vector<uint8_t> raw_timestamp = icmp_analyzer_packet::get_bytes_from_packet(packet->getRawData(),
                                                                                          packet->getRawDataLen(), 91,
-                                                                                         99);
+                                                                                         99);*/
 
-        auto tv_sec = (uint32_t) raw_timestamp[0] << 24 | (uint32_t) raw_timestamp[1] << 16 |
+        /*auto tv_sec = (uint32_t) raw_timestamp[0] << 24 | (uint32_t) raw_timestamp[1] << 16 |
                       (uint32_t) raw_timestamp[2] << 8 | raw_timestamp[3];
         auto tv_nsec = (uint32_t) raw_timestamp[4] << 24 | (uint32_t) raw_timestamp[5] << 16 |
                        (uint32_t) raw_timestamp[6] << 8 | raw_timestamp[7];
         auto p_duration = std::chrono::seconds{tv_sec} +
                           std::chrono::nanoseconds{tv_nsec};
         auto p_time = std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds>{p_duration};
-        auto p_t = std::chrono::system_clock::to_time_t(p_time);
-        std::cout << "ICMP time: " << icmp_analyzer_packet::print_time(p_t, p_time) << std::endl;
+        auto p_t = std::chrono::system_clock::to_time_t(p_time);*/
+        std::cout << "ICMP time: " << icmp_packet.print_time_icmp_sent() << std::endl;
 
-        auto duration = std::chrono::seconds{parsedPacket.getRawPacket()->getPacketTimeStamp().tv_sec} +
+        /*auto duration = std::chrono::seconds{parsedPacket.getRawPacket()->getPacketTimeStamp().tv_sec} +
                         std::chrono::nanoseconds{parsedPacket.getRawPacket()->getPacketTimeStamp().tv_nsec};
 
         auto time = std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds>{duration};
-        auto t = std::chrono::system_clock::to_time_t(time);
-        std::cout << "Arrival time: " << icmp_analyzer_packet::print_time(t, time) << std::endl;
+        auto t = std::chrono::system_clock::to_time_t(time);*/
+        std::cout << "Captured time: " << icmp_packet.print_time_captured() << std::endl;
 
-        auto raw_wlan_duration = icmp_analyzer_packet::get_bytes_from_packet(packet->getRawData(),
+        /*auto raw_wlan_duration = icmp_analyzer_packet::get_bytes_from_packet(packet->getRawData(),
                                                                              packet->getRawDataLen(), 31, 33);
-        auto wlan_duration = (uint32_t) raw_wlan_duration[1] << 8 | raw_wlan_duration[0];
-        std::cout << "WLAN duration: " << wlan_duration << " ms" << std::endl;
-        if (is_icmp_req)
+        auto wlan_duration = (uint32_t) raw_wlan_duration[1] << 8 | raw_wlan_duration[0];*/
+        std::cout << "WLAN duration: " << icmp_packet.get_wlan_duration() << " µs" << std::endl;
+        /*if (is_icmp_req)
         {
             this->icmp_packet_timestamps.push_back(std::tuple(duration, std::chrono::nanoseconds{0}));
         }
@@ -158,12 +163,23 @@ void packet_analyzer::parse_packets()
             if (sequence_number < this->icmp_packet_timestamps.size())
                 this->icmp_packet_timestamps[sequence_number] = std::tuple(
                         std::get<0>(this->icmp_packet_timestamps[sequence_number]), duration);
-        }
+        }*/
 
         std::cout << "----------------------------------" << std::endl;
     }
     std::cout << std::endl << "Differences between ICMP packets: " << std::endl;
-    for (int i = 0; i < this->icmp_packet_timestamps.size(); ++i)
+    std::vector<std::pair<icmp_analyzer_packet, icmp_analyzer_packet>> icmp_packets = adapter.get_icmp_req_rep_list();
+    for (int i = 0; i < icmp_packets.size(); ++i)
+    {
+        auto diff = std::chrono::duration_cast<std::chrono::nanoseconds>(
+                icmp_packets[i].second.get_captured_time() - icmp_packets[i].first.get_captured_time()).count() /
+                    1000;
+        float diff_f = diff / 1000.0;
+        std::cout << "Packet " << i << ": "
+                  << std::setprecision(6) << diff_f << " ms"
+                  << std::endl;
+    }
+/*    for (int i = 0; i < adapter.get_packet_count(); ++i)
     {
         auto diff = std::chrono::duration_cast<std::chrono::nanoseconds>(
                 std::get<1>(this->icmp_packet_timestamps[i]) - std::get<0>(this->icmp_packet_timestamps[i])).count() /
@@ -172,7 +188,7 @@ void packet_analyzer::parse_packets()
         std::cout << "Packet " << i << ": "
                   << std::setprecision(6) << diff_f << " ms"
                   << std::endl;
-    }
+    }*/
 #else
     std::cout << "----------------------------------" << std::endl;
     std::cout << "Packet incoming" << std::endl;

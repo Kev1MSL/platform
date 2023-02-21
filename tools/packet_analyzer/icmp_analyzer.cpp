@@ -4,10 +4,24 @@
 
 #include "icmp_analyzer.h"
 
-
-icmp_analyzer_packet::icmp_analyzer_packet(const uint8_t *raw_data, int raw_data_len, timespec captured_tv_sec,
-                                           timespec captured_tv_nsec)
+icmp_analyzer_packet::icmp_analyzer_packet()
 {
+    this->raw_data = nullptr;
+    this->raw_data_len = 0;
+    this->icmpType = NOT_ICMP;
+    this->signal_strength = 0;
+    this->sequence_number = 0;
+    this->id_number = 0;
+    this->wlan_duration = 0;
+
+}
+
+icmp_analyzer_packet::icmp_analyzer_packet(const uint8_t *raw_data, int raw_data_len, timespec timestamp)
+{
+
+    this->raw_data = raw_data;
+    this->raw_data_len = raw_data_len;
+    
     bool is_icmp_req =
             icmp_analyzer_packet::get_byte_from_packet(83) == 0x8 &&
             icmp_analyzer_packet::get_byte_from_packet(84) == 0x0 &&
@@ -23,8 +37,6 @@ icmp_analyzer_packet::icmp_analyzer_packet(const uint8_t *raw_data, int raw_data
     else
         this->icmpType = NOT_ICMP;
 
-    this->raw_data = raw_data;
-    this->raw_data_len = raw_data_len;
 
     this->signal_strength = (int8_t) icmp_analyzer_packet::get_byte_from_packet(22);
     std::vector<uint8_t> raw_seq_number = icmp_analyzer_packet::get_bytes_from_packet(89, 91);
@@ -40,8 +52,8 @@ icmp_analyzer_packet::icmp_analyzer_packet(const uint8_t *raw_data, int raw_data
                               std::chrono::nanoseconds{tv_nsec};
 
     this->sent_time = icmp_duration_sent;
-    auto captured_duration = std::chrono::seconds{captured_tv_sec.tv_sec} +
-                             std::chrono::nanoseconds{captured_tv_nsec.tv_nsec};
+    auto captured_duration = std::chrono::seconds{timestamp.tv_sec} +
+                             std::chrono::nanoseconds{timestamp.tv_nsec};
 
     this->captured_time = captured_duration;
 
@@ -62,12 +74,59 @@ icmp_analyzer_adapter::~icmp_analyzer_adapter()
 
 void icmp_analyzer_adapter::add_icmp_packet(const icmp_analyzer_packet &icmp_packet)
 {
+    for (size_t i = 0; i < this->icmp_packet_list.size(); i++)
+    {
+        if (this->icmp_packet_list[i].get_id_number() == icmp_packet.get_id_number() &&
+            this->icmp_packet_list[i].get_sequence_number() == icmp_packet.get_sequence_number() &&
+            this->icmp_packet_list[i].get_icmp_type() == icmp_packet.get_icmp_type())
+        {
+            this->icmp_packet_list[i] = icmp_packet;
+            return;
+        }
+    }
     this->icmp_packet_list.push_back(icmp_packet);
 }
 
 icmp_analyzer_adapter::icmp_analyzer_adapter()
 {
     this->icmp_packet_list.clear();
+}
+
+size_t icmp_analyzer_adapter::get_packet_count()
+{
+    return this->icmp_packet_list.size();
+}
+
+std::pair<icmp_analyzer_packet, icmp_analyzer_packet> icmp_analyzer_adapter::get_icmp_req_rep(int sequence_number)
+{
+    icmp_analyzer_packet icmp_req;
+    icmp_analyzer_packet icmp_rep;
+    for (auto &packet: this->icmp_packet_list)
+    {
+        if (packet.get_sequence_number() == sequence_number)
+        {
+            if (packet.get_icmp_type() == ICMP_REQUEST)
+                icmp_req = packet;
+            else if (packet.get_icmp_type() == ICMP_REPLY)
+                icmp_rep = packet;
+        }
+    }
+    return std::make_pair(icmp_req, icmp_rep);
+}
+
+std::vector<std::pair<icmp_analyzer_packet, icmp_analyzer_packet>> icmp_analyzer_adapter::get_icmp_req_rep_list()
+{
+    std::vector<std::pair<icmp_analyzer_packet, icmp_analyzer_packet>> icmp_req_rep_list;
+    for (auto &packet: this->icmp_packet_list)
+    {
+        if (packet.get_icmp_type() == ICMP_REQUEST)
+        {
+            std::pair<icmp_analyzer_packet, icmp_analyzer_packet> icmp_req_rep = get_icmp_req_rep(
+                    packet.get_sequence_number());
+            icmp_req_rep_list.push_back(icmp_req_rep);
+        }
+    }
+    return icmp_req_rep_list;
 }
 
 uint8_t icmp_analyzer_packet::get_byte_from_packet(int offset)
@@ -113,4 +172,44 @@ std::string icmp_analyzer_packet::print_time_icmp_sent()
     std::stringstream ss;
     ss << std::put_time(tm, "%d/%m/%Y %T.") << fr;
     return ss.str();
+}
+
+bool icmp_analyzer_packet::is_icmp_packet()
+{
+    return this->icmpType != NOT_ICMP;
+}
+
+icmp_type icmp_analyzer_packet::get_icmp_type() const
+{
+    return this->icmpType;
+}
+
+int icmp_analyzer_packet::get_signal_strength() const
+{
+    return this->signal_strength;
+}
+
+int icmp_analyzer_packet::get_sequence_number() const
+{
+    return this->sequence_number;
+}
+
+int icmp_analyzer_packet::get_id_number() const
+{
+    return this->id_number;
+}
+
+uint32_t icmp_analyzer_packet::get_wlan_duration() const
+{
+    return this->wlan_duration;
+}
+
+std::chrono::duration<long, std::ratio<1, 1000000000>> icmp_analyzer_packet::get_sent_time() const
+{
+    return this->sent_time;
+}
+
+std::chrono::duration<long, std::ratio<1, 1000000000>> icmp_analyzer_packet::get_captured_time() const
+{
+    return this->captured_time;
 }
