@@ -1,7 +1,7 @@
 #include "propagate_update.h"
 
 /// @brief Constructor for the ssh_updater class.
-/// @param config The ssh_config object containing the connection information for each raspberry pi.
+/// @param config The ssh_configuration object containing the connection information for each raspberry pi.
 ssh_updater::ssh_updater(ssh_config &config)
 {
     int verbosity = SSH_LOG_NOLOG;
@@ -376,6 +376,114 @@ std::vector<std::string> ssh_updater::split_dir(const std::string &path)
     }
     directories.push_back(current);
     return directories;
+}
+
+int ssh_updater::start_monitor(bool icmp_only)
+{
+    std::cout << "Starting monitor..." << std::endl;
+    /*return this->run_command("tcpdump -i wlan0 -w /tmp/monitor.pcap -s 0 " + std::string(icmp_only ? "icmp &" : "&"));*/
+    std::string command =
+            "sh -c 'tcpdump -i wlan0 -w /tmp/monitor.pcap -s 0" + std::string(icmp_only ? " icmp " : " ") +
+            "> /dev/null 2>&1 &'";
+    return this->run_command(command);
+}
+
+int ssh_updater::stop_monitor()
+{
+    std::cout << "Stopping monitor..." << std::endl;
+    if (this->run_command("killall tcpdump") != SSH_OK)
+        return SSH_ERROR;
+    sleep(5);
+    return this->download_file("/tmp/monitor.pcap", "cache/monitor.pcap");
+}
+
+int ssh_updater::download_file(const std::string &from_path, const std::string &target_path)
+{
+    // Create the scp session
+    int rc;
+    char *buffer;
+    ssh_scp scp = ssh_scp_new(this->session, SSH_SCP_READ, from_path.c_str());
+    if (scp == nullptr)
+    {
+        fprintf(stderr, "Can't create scp session: %s\n",
+                ssh_get_error(this->session));
+        return SSH_ERROR;
+    }
+
+    rc = ssh_scp_init(scp);
+    if (rc != SSH_OK)
+    {
+        fprintf(stderr, "Can't initialize scp session: %s\n",
+                ssh_get_error(this->session));
+        ssh_scp_free(scp);
+        return SSH_ERROR;
+    }
+
+    rc = ssh_scp_pull_request(scp);
+    if (rc != SSH_SCP_REQUEST_NEWFILE)
+    {
+        fprintf(stderr, "Can't get file from scp session: %s\n",
+                ssh_get_error(this->session));
+        ssh_scp_close(scp);
+        ssh_scp_free(scp);
+        return SSH_ERROR;
+    }
+    size_t size = ssh_scp_request_get_size(scp);
+    std::string filename = ssh_scp_request_get_filename(scp);
+    if (filename.empty())
+    {
+        fprintf(stderr, "Can't get filename from scp session: %s\n",
+                ssh_get_error(this->session));
+        ssh_scp_close(scp);
+        ssh_scp_free(scp);
+        return SSH_ERROR;
+    }
+
+
+    buffer = (char *) (malloc(size));
+    if (buffer == nullptr)
+    {
+        fprintf(stderr, "Can't allocate memory for file: %s\n",
+                ssh_get_error(this->session));
+        ssh_scp_close(scp);
+        ssh_scp_free(scp);
+        return SSH_ERROR;
+    }
+
+    ssh_scp_accept_request(scp);
+    rc = ssh_scp_read(scp, buffer, size);
+    if (rc == SSH_ERROR)
+    {
+        fprintf(stderr, "Can't read file from scp session: %s\n",
+                ssh_get_error(this->session));
+        ssh_scp_close(scp);
+        ssh_scp_free(scp);
+        return SSH_ERROR;
+    }
+
+    // Write the file to the local machine
+    std::string dir = target_path.substr(0, target_path.find_last_of('/'));
+    if (!dir.empty())
+    {
+        std::filesystem::create_directories(dir);
+    }
+    FILE *local = fopen(target_path.c_str(), "w");
+    if (local == nullptr)
+    {
+        fprintf(stderr, "Can't open local file for writing: %s\n",
+                ssh_get_error(this->session));
+        ssh_scp_close(scp);
+        ssh_scp_free(scp);
+        return SSH_ERROR;
+    }
+    fwrite(buffer, 1, size, local);
+    fclose(local);
+    system(("chmod 777 " + target_path).c_str());
+    // Close the scp session and free the memory
+    free(buffer);
+    ssh_scp_close(scp);
+    ssh_scp_free(scp);
+    return SSH_OK;
 }
 
 /// @brief Helper function to add all files recursively from a directory to a vector of files, by replacing the wildcard with the actual files.

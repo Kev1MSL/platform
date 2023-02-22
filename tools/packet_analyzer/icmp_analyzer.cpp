@@ -21,15 +21,15 @@ icmp_analyzer_packet::icmp_analyzer_packet(const uint8_t *raw_data, int raw_data
 
     this->raw_data = raw_data;
     this->raw_data_len = raw_data_len;
-    
+
     bool is_icmp_req =
-            icmp_analyzer_packet::get_byte_from_packet(83) == 0x8 &&
-            icmp_analyzer_packet::get_byte_from_packet(84) == 0x0 &&
-            icmp_analyzer_packet::get_byte_from_packet(29) == 0x88;
+            icmp_analyzer_packet::get_byte_from_packet(84) == 0x8 &&
+            icmp_analyzer_packet::get_byte_from_packet(85) == 0x0 &&
+            icmp_analyzer_packet::get_byte_from_packet(73) == 0x1;
     bool is_icmp_rep =
-            icmp_analyzer_packet::get_byte_from_packet(83) == 0x0 &&
             icmp_analyzer_packet::get_byte_from_packet(84) == 0x0 &&
-            icmp_analyzer_packet::get_byte_from_packet(29) == 0x88;
+            icmp_analyzer_packet::get_byte_from_packet(85) == 0x0 &&
+            icmp_analyzer_packet::get_byte_from_packet(73) == 0x1;
     if (is_icmp_req)
         this->icmpType = ICMP_REQUEST;
     else if (is_icmp_rep)
@@ -39,11 +39,11 @@ icmp_analyzer_packet::icmp_analyzer_packet(const uint8_t *raw_data, int raw_data
 
 
     this->signal_strength = (int8_t) icmp_analyzer_packet::get_byte_from_packet(22);
-    std::vector<uint8_t> raw_seq_number = icmp_analyzer_packet::get_bytes_from_packet(89, 91);
+    std::vector<uint8_t> raw_seq_number = icmp_analyzer_packet::get_bytes_from_packet(90, 92);
     this->sequence_number = ((uint16_t) raw_seq_number[0] << 8) | raw_seq_number[1];
-    std::vector<uint8_t> raw_id_number = icmp_analyzer_packet::get_bytes_from_packet(87, 89);
+    std::vector<uint8_t> raw_id_number = icmp_analyzer_packet::get_bytes_from_packet(88, 90);
     this->id_number = ((uint16_t) raw_id_number[0] << 8) | raw_id_number[1];
-    std::vector<uint8_t> raw_timestamp = icmp_analyzer_packet::get_bytes_from_packet(91, 99);
+    std::vector<uint8_t> raw_timestamp = icmp_analyzer_packet::get_bytes_from_packet(92, 100);
     uint32_t tv_sec = (uint32_t) raw_timestamp[0] << 24 | (uint32_t) raw_timestamp[1] << 16 |
                       (uint32_t) raw_timestamp[2] << 8 | raw_timestamp[3];
     uint32_t tv_nsec = (uint32_t) raw_timestamp[4] << 24 | (uint32_t) raw_timestamp[5] << 16 |
@@ -58,7 +58,7 @@ icmp_analyzer_packet::icmp_analyzer_packet(const uint8_t *raw_data, int raw_data
     this->captured_time = captured_duration;
 
     auto raw_wlan_duration = icmp_analyzer_packet::get_bytes_from_packet
-            (31, 33);
+            (32, 34);
     this->wlan_duration = (uint32_t) raw_wlan_duration[1] << 8 | raw_wlan_duration[0];
 }
 

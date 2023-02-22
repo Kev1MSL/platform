@@ -1,0 +1,7 @@
+{
+  "MONITOR_ENABLED": true,
+  "ONLY_ICMP": true,
+  "MONITOR_IP": "192.168.18.2",
+  "MONITOR_USERNAME": "root",
+  "MONITOR_PASSWORD": "raspberry"
+}

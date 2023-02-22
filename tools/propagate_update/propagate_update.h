@@ -25,17 +25,32 @@ class ssh_updater
 private:
     ssh_session session;
     std::string host;
+
     std::vector<std::string> split_dir(const std::string &path);
 
 public:
     ssh_updater(ssh_config &config);
+
     int run_update(const std::string &path);
+
     int run_command(const std::string &command);
+
     int install_packages(const std::vector<std::string> &packages);
-    int send_files(const std::string &from_path, const std::string &target_path, const std::vector<std::string> &filenames);
+
+    int
+    send_files(const std::string &from_path, const std::string &target_path, const std::vector<std::string> &filenames);
+
+    int start_monitor(bool icmp_only);
+
+    int stop_monitor();
+
+    int download_file(const std::string &from_path, const std::string &target_path);
+
     void disconnect();
+
     ~ssh_updater();
 };
 
 void add_files_from_dir(std::vector<std::string> *files, const std::string &path);
+
 #endif /* TOOLS_PROPAGATE_UPDATE_PROPAGATE_UPDATE */

@@ -16,9 +16,15 @@
 #include "pcapplusplus/PcapLiveDeviceList.h"
 #include "pcapplusplus/SystemUtils.h"
 #include "pcapplusplus/IcmpLayer.h"
+#include "pcapplusplus/PcapFileDevice.h"
 #include <tuple>
 #include "icmp_analyzer.h"
 #include <tabulate/table.hpp>
+#include "../propagate_update/propagate_update.h"
+
+#include <jsoncpp/json/json.h>
+#include <jsoncpp/json/value.h>
+#include <fstream>
 
 #define IS_MONITOR_MODE 1
 
@@ -38,8 +44,13 @@ public:
     ~packet_analyzer();
 
 private:
+    bool is_monitor_mode;
+    ssh_config ssh_configuration;
     pcpp::PcapLiveDevice *m_device;
-    pcpp::RawPacketVector packet_vector;
+    //pcpp::RawPacketVector packet_vector;
+
+    std::vector<pcpp::RawPacket> packet_vector;
+
     std::vector<std::tuple<std::chrono::duration<long, std::ratio<1, 1000000000>>, std::chrono::duration<long, std::ratio<1, 1000000000>>>> icmp_packet_timestamps;
 
     static std::string getProtocolTypeAsString(pcpp::ProtocolType protocolType);

@@ -370,7 +370,7 @@ int main(int argc, char *argv[])
 
 /// @brief Get the ssh configuration of the Raspberry PI from the static/devices.json file.
 /// @param path Path to the directory where we want to execute the ssh_updater commands.
-/// @return A vector of ssh_config containing the configuration of all the Raspberry PIs.
+/// @return A vector of ssh_configuration containing the configuration of all the Raspberry PIs.
 std::vector<ssh_config> get_ssh_config(const std::string &path)
 {
     std::ifstream rpi_config_file("static/devices.json");

@@ -67,9 +67,31 @@ void packet_analyzer::start_capture()
 {
     std::cout << std::endl
               << "Starting async capture..." << std::endl;
+    std::ifstream monitor_config_file("static/monitor.json");
+    Json::Value json_monitor_config;
+/*    if (!monitor_config_file.good())
+    {
+        std::cout << "ERROR: Unable to open devices.json. Launching is non-monitor mode." << std::endl;
+        this->m_device->startCapture(this->packet_vector);
+        return;
+    }*/
 
-    // start capture in async mode. Give a callback function to call to whenever a packet is captured and the stats object as the cookie
-    this->m_device->startCapture(this->packet_vector);
+    monitor_config_file >> json_monitor_config;
+
+    this->is_monitor_mode = json_monitor_config["MONITOR_ENABLED"].asBool();
+
+    if (this->is_monitor_mode)
+    {
+        this->ssh_configuration.host = json_monitor_config["MONITOR_IP"].asString();
+        this->ssh_configuration.username = json_monitor_config["MONITOR_USERNAME"].asString();
+        this->ssh_configuration.password = json_monitor_config["MONITOR_PASSWORD"].asString();
+        ssh_updater ssh_updater(this->ssh_configuration);
+        ssh_updater.start_monitor(json_monitor_config["ONLY_ICMP"].asBool());
+    } /*else
+    {
+        // start capture in async mode. Give a callback function to call to whenever a packet is captured and the stats object as the cookie
+        this->m_device->startCapture(this->packet_vector);
+    }*/
 }
 
 void packet_analyzer::stop_capture()
@@ -78,7 +100,28 @@ void packet_analyzer::stop_capture()
               << "Stopping capture..." << std::endl;
 
     // stop the capture
-    this->m_device->stopCapture();
+    if (this->is_monitor_mode)
+    {
+        ssh_updater ssh_updater(this->ssh_configuration);
+        ssh_updater.stop_monitor();
+        pcpp::IFileReaderDevice *reader = pcpp::IFileReaderDevice::getReader("cache/monitor.pcap");
+        if (reader == nullptr || !reader->open())
+        {
+            std::cout << "ERROR: Unable to open monitor.pcap" << std::endl;
+            return;
+        }
+        pcpp::RawPacket rawPacket;
+        while (reader->getNextPacket(rawPacket))
+        {
+            this->packet_vector.push_back(rawPacket);
+        }
+        reader->close();
+        delete reader;
+    } else
+    {
+        this->m_device->stopCapture();
+    }
+
 
     std::cout << std::endl
               << "Capture stopped" << std::endl;
@@ -88,13 +131,13 @@ void packet_analyzer::stop_capture()
 void packet_analyzer::parse_packets()
 {
     icmp_analyzer_adapter adapter;
-    for (auto packet: this->packet_vector)
+    for (const pcpp::RawPacket &packet: this->packet_vector)
     {
-        pcpp::Packet parsedPacket(packet);
+        /*pcpp::Packet parsedPacket(packet);*/
         icmp_analyzer_packet icmp_packet
-                (parsedPacket.getRawPacket()->getRawData(),
-                 parsedPacket.getRawPacket()->getRawDataLen(),
-                 parsedPacket.getRawPacket()->getPacketTimeStamp());
+                (packet.getRawData(),
+                 packet.getRawDataLen(),
+                 packet.getPacketTimeStamp());
 
 #if IS_MONITOR_MODE == 1
         if (!icmp_packet.is_icmp_packet())
@@ -143,20 +186,8 @@ void packet_analyzer::parse_packets()
         table.format().font_align(tabulate::FontAlign::center);
         table.row(6).format().multi_byte_characters(true);
         std::cout << table << std::endl << std::endl << std::endl;
-/*        std::cout << "Packet " << packet.first.get_sequence_number() << ": "
-                  << std::setprecision(6) << diff_f << " ms"
-                  << std::endl;*/
+
     }
-/*    for (int i = 0; i < icmp_packets.size(); ++i)
-    {
-        auto diff = std::chrono::duration_cast<std::chrono::nanoseconds>(
-                icmp_packets[i].second.get_captured_time() - icmp_packets[i].first.get_captured_time()).count() /
-                    1000;
-        float diff_f = diff / 1000.0;
-        std::cout << "Packet " << i << ": "
-                  << std::setprecision(6) << diff_f << " ms"
-                  << std::endl;
-    }*/
 #else
     std::cout << "----------------------------------" << std::endl;
     std::cout << "Packet incoming" << std::endl;
