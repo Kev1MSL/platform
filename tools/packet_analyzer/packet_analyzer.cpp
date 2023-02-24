@@ -3,8 +3,6 @@
 //
 
 
-#include <pcap/dlt.h>
-#include <pcap/pcap.h>
 #include "packet_analyzer.h"
 
 packet_analyzer::packet_analyzer(const std::string &device_name)
@@ -67,30 +65,29 @@ void packet_analyzer::start_capture()
 {
     std::cout << std::endl
               << "Starting async capture..." << std::endl;
-    std::ifstream monitor_config_file("static/monitor.json");
-    Json::Value json_monitor_config;
+    /*std::ifstream monitor_config_file("static/monitor.json");
+    Json::Value json_monitor_config;*/
 /*    if (!monitor_config_file.good())
     {
         std::cout << "ERROR: Unable to open devices.json. Launching is non-monitor mode." << std::endl;
-        this->m_device->startCapture(this->packet_vector);
+        this->m_device->startCapture(this->packet_vector_4_monitor);
         return;
     }*/
 
-    monitor_config_file >> json_monitor_config;
+    /*monitor_config_file >> json_monitor_config;
 
-    this->is_monitor_mode = json_monitor_config["MONITOR_ENABLED"].asBool();
+    this->is_monitor_mode = json_monitor_config["MONITOR_ENABLED"].asBool();*/
+    bool only_icmp = this->get_monitor_ssh_config();
 
     if (this->is_monitor_mode)
     {
-        this->ssh_configuration.host = json_monitor_config["MONITOR_IP"].asString();
-        this->ssh_configuration.username = json_monitor_config["MONITOR_USERNAME"].asString();
-        this->ssh_configuration.password = json_monitor_config["MONITOR_PASSWORD"].asString();
         ssh_updater ssh_updater(this->ssh_configuration);
-        ssh_updater.start_monitor(json_monitor_config["ONLY_ICMP"].asBool());
+        this->m_device->startCapture(this->packet_vector);
+        ssh_updater.start_monitor(only_icmp);
     } /*else
     {
         // start capture in async mode. Give a callback function to call to whenever a packet is captured and the stats object as the cookie
-        this->m_device->startCapture(this->packet_vector);
+        this->m_device->startCapture(this->packet_vector_4_monitor);
     }*/
 }
 
@@ -103,6 +100,7 @@ void packet_analyzer::stop_capture()
     if (this->is_monitor_mode)
     {
         ssh_updater ssh_updater(this->ssh_configuration);
+        this->m_device->stopCapture();
         ssh_updater.stop_monitor();
         pcpp::IFileReaderDevice *reader = pcpp::IFileReaderDevice::getReader("cache/monitor.pcap");
         if (reader == nullptr || !reader->open())
@@ -113,7 +111,7 @@ void packet_analyzer::stop_capture()
         pcpp::RawPacket rawPacket;
         while (reader->getNextPacket(rawPacket))
         {
-            this->packet_vector.push_back(rawPacket);
+            this->packet_vector_4_monitor.push_back(rawPacket);
         }
         reader->close();
         delete reader;
@@ -131,10 +129,10 @@ void packet_analyzer::stop_capture()
 void packet_analyzer::parse_packets()
 {
     icmp_analyzer_adapter adapter;
-    for (const pcpp::RawPacket &packet: this->packet_vector)
+    for (const pcpp::RawPacket &packet: this->packet_vector_4_monitor)
     {
         /*pcpp::Packet parsedPacket(packet);*/
-        icmp_analyzer_packet icmp_packet
+        icmp_analyzer_monitor_packet icmp_packet
                 (packet.getRawData(),
                  packet.getRawDataLen(),
                  packet.getPacketTimeStamp());
@@ -155,9 +153,53 @@ void packet_analyzer::parse_packets()
         std::cout << "WLAN duration: " << icmp_packet.get_wlan_duration() << " µs" << std::endl;
         std::cout << "----------------------------------" << std::endl;
     }
+
+    for (auto &iter: this->packet_vector)
+    {
+        pcpp::Packet parsedPacket(iter);
+        if (!parsedPacket.getLayerOfType(pcpp::ICMP))
+        {
+            continue;
+        }
+        auto *icmpLayer = parsedPacket.getLayerOfType<pcpp::IcmpLayer>();
+        if (icmpLayer->getIcmpHeader()->type == 0x8)
+        {
+            icmp_analyzer_monitor_packet icmp_packet
+                    (iter->getRawData(),
+                     iter->getRawDataLen(),
+                     iter->getPacketTimeStamp());
+            std::vector<uint8_t> raw_timestamp = icmp_packet.get_bytes_from_packet(42, 50);
+            uint32_t tv_sec = (uint32_t) raw_timestamp[0] << 24 | (uint32_t) raw_timestamp[1] << 16 |
+                              (uint32_t) raw_timestamp[2] << 8 | raw_timestamp[3];
+            uint32_t tv_nsec = (uint32_t) raw_timestamp[4] << 24 | (uint32_t) raw_timestamp[5] << 16 |
+                               (uint32_t) raw_timestamp[6] << 8 | raw_timestamp[7];
+            auto icmp_duration_sent = std::chrono::seconds{tv_sec} +
+                                      std::chrono::nanoseconds{tv_nsec};
+            auto id = __bswap_constant_16(icmpLayer->getEchoRequestData()->header->id);
+            auto sequence = __bswap_constant_16(icmpLayer->getEchoRequestData()->header->sequence);
+            adapter.change_echo_icmp_req_rep_time(id,
+                                                  sequence,
+                                                  icmp_duration_sent);
+
+            auto duration = std::chrono::seconds{parsedPacket.getRawPacket()->getPacketTimeStamp().tv_sec} +
+                            std::chrono::nanoseconds{parsedPacket.getRawPacket()->getPacketTimeStamp().tv_nsec};
+
+            auto time = std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds>{duration};
+            adapter.change_echo_icmp_captured_time(ICMP_REQUEST, id, sequence, duration);
+
+        } else if (icmpLayer->getIcmpHeader()->type == 0x0)
+        {
+            auto duration = std::chrono::seconds{parsedPacket.getRawPacket()->getPacketTimeStamp().tv_sec} +
+                            std::chrono::nanoseconds{parsedPacket.getRawPacket()->getPacketTimeStamp().tv_nsec};
+            auto id = __bswap_constant_16(icmpLayer->getEchoReplyData()->header->id);
+            auto sequence = __bswap_constant_16(icmpLayer->getEchoReplyData()->header->sequence);
+            adapter.change_echo_icmp_captured_time(ICMP_REPLY, id, sequence, duration);
+        }
+
+    }
     std::cout << std::endl << "Differences between ICMP packets: " << std::endl;
-    std::vector<std::pair<icmp_analyzer_packet, icmp_analyzer_packet>> icmp_packets = adapter.get_icmp_req_rep_list();
-    for (std::pair<icmp_analyzer_packet, icmp_analyzer_packet> packet: icmp_packets)
+    std::vector<std::pair<icmp_analyzer_monitor_packet, icmp_analyzer_monitor_packet>> icmp_packets = adapter.get_icmp_req_rep_list();
+    for (std::pair<icmp_analyzer_monitor_packet, icmp_analyzer_monitor_packet> packet: icmp_packets)
     {
         tabulate::Table table;
         table.add_row({"", "ICMP Request", "ICMP Reply"});
@@ -186,8 +228,9 @@ void packet_analyzer::parse_packets()
         table.format().font_align(tabulate::FontAlign::center);
         table.row(6).format().multi_byte_characters(true);
         std::cout << table << std::endl << std::endl << std::endl;
-
     }
+    export_to_csv("results/icmp_echo_experiment.csv", icmp_packets);
+
 #else
     std::cout << "----------------------------------" << std::endl;
     std::cout << "Packet incoming" << std::endl;
@@ -250,6 +293,111 @@ for (int i = 0; i < this->icmp_packet_timestamps.size(); ++i)
 
 }
 
+bool packet_analyzer::on_packet_arrives(pcpp::RawPacket *packet, pcpp::PcapLiveDevice *dev, void *cookie)
+{
+    pcpp::Packet parsedPacket(packet);
+    if (parsedPacket.isPacketOfType(pcpp::ARP))
+    {
+        auto *arpLayer = parsedPacket.getLayerOfType<pcpp::ArpLayer>();
+        auto header = arpLayer->getArpHeader();
+        if (__bswap_constant_16(arpLayer->getArpHeader()->opcode) == pcpp::ARP_REPLY)
+        {
+            auto *mac = (pcpp::MacAddress *) cookie;
+            *mac = arpLayer->getArpHeader()->senderMacAddr;
+            std::cout << "Got ARP reply" << std::endl;
+            dev->stopCapture();
+            return false;
+        }
+    }
+    return true;
+}
+
+void
+packet_analyzer::start_icmp_echo_experiment(const std::string &target_ip, int nb_packets, int packet_size, int interval)
+{
+    // Send an ARP request to get the MAC address of the target
+    pcpp::EthLayer ethLayer(this->m_device->getMacAddress(), pcpp::MacAddress("ff:ff:ff:ff:ff:ff"), PCPP_ETHERTYPE_ARP);
+    pcpp::ArpLayer arpLayer(pcpp::ARP_REQUEST, this->m_device->getMacAddress(), pcpp::MacAddress("ff:ff:ff:ff:ff:ff"),
+                            this->m_device->getIPv4Address(),
+                            pcpp::IPv4Address(target_ip));
+    pcpp::Packet arpPacket(42);
+    arpPacket.addLayer(&ethLayer);
+    arpPacket.addLayer(&arpLayer);
+    arpPacket.computeCalculateFields();
+    this->m_device->sendPacket(&arpPacket);
+    pcpp::MacAddress hw_address_to_ping;
+    this->m_device->startCaptureBlockingMode(on_packet_arrives, &hw_address_to_ping, 1000);
+    std::cout << "MAC address to ping: " << hw_address_to_ping << std::endl;
+    // Start capture
+    this->start_capture();
+    pcpp::multiPlatformSleep(1);
+    std::random_device rd;
+    // Random sequence sequence id
+    auto seq_id = rd();
+    for (int i = 0; i < nb_packets; ++i)
+    {
+        // Send ICMP packets
+        pcpp::EthLayer ethLayer4icmp(this->m_device->getMacAddress(), hw_address_to_ping, PCPP_ETHERTYPE_IP);
+        pcpp::IPv4Layer ipLayer4icmp(pcpp::IPv4Address(this->m_device->getIPv4Address()),
+                                     pcpp::IPv4Address(target_ip));
+
+
+        auto ip_id = rd();
+        ipLayer4icmp.getIPv4Header()->timeToLive = 64;
+        ipLayer4icmp.getIPv4Header()->ipId = htons(ip_id);
+
+
+        auto *data = new uint8_t[packet_size];
+        std::generate_n(data, packet_size, std::ref(rd));
+        auto time = std::chrono::duration_cast<std::chrono::seconds>(
+                std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+
+        std::cout << time << std::endl;
+        pcpp::IcmpLayer icmpLayer;
+
+        auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(
+                std::chrono::high_resolution_clock::now().time_since_epoch());
+        auto seconds = std::chrono::duration_cast<std::chrono::seconds>(duration).count();
+        auto nanoseconds_only = duration - std::chrono::seconds(seconds);
+        std::cout << "Seconds: " << seconds << std::endl;
+        std::cout << "Nanoseconds: " << nanoseconds_only.count() << std::endl;
+        auto timestamp = seconds << 32 | nanoseconds_only.count();
+
+        //icmpLayer.getEchoRequestData()->header->timestamp = __bswap_constant_64(timestamp);
+        std::cout << "Timestamp: " << duration.count() << std::endl;
+        icmpLayer.setEchoRequestData(seq_id, i, __bswap_constant_64(timestamp), data, packet_size + 6);
+        std::stringstream ss;
+        ss << std::hex << timestamp << std::endl;
+        std::cout << "Timestamp: " << ss.str() << std::endl;
+        pcpp::Packet icmpPacket(50 + packet_size);
+        icmpPacket.addLayer(&ethLayer4icmp);
+        icmpPacket.addLayer(&ipLayer4icmp);
+        icmpPacket.addLayer(&icmpLayer);
+        icmpPacket.computeCalculateFields();
+
+        this->m_device->sendPacket(&icmpPacket);
+        std::this_thread::sleep_for(std::chrono::milliseconds(interval));
+
+    }
+    // Stop capture
+    pcpp::multiPlatformSleep(1);
+    this->stop_capture();
+
+}
+
+bool packet_analyzer::get_monitor_ssh_config()
+{
+    std::ifstream monitor_config_file("static/monitor.json");
+    Json::Value json_monitor_config;
+    monitor_config_file >> json_monitor_config;
+    this->is_monitor_mode = json_monitor_config["MONITOR_ENABLED"].asBool();
+    this->ssh_configuration.host = json_monitor_config["MONITOR_IP"].asString();
+    this->ssh_configuration.username = json_monitor_config["MONITOR_USERNAME"].asString();
+    this->ssh_configuration.password = json_monitor_config["MONITOR_PASSWORD"].asString();
+    return json_monitor_config["ONLY_ICMP"].asBool();
+}
+
+
 std::string packet_analyzer::getProtocolTypeAsString(pcpp::ProtocolType protocolType)
 {
     switch (protocolType)
@@ -290,3 +438,31 @@ std::string packet_analyzer::getProtocolTypeAsString(pcpp::ProtocolType protocol
             return "Unknown";
     }
 }
+
+void packet_analyzer::export_to_csv(const std::string &file_name,
+                                    std::vector<std::pair<icmp_analyzer_monitor_packet, icmp_analyzer_monitor_packet>> &icmp_packets)
+{
+    std::ofstream csv_file(file_name);
+    csv_file
+            << "ICMP_type,Identifier,Sequence,Sent_timestamp,Captured_timestamp,Packet_size,Signal_strength,WLAN_duration"
+            << std::endl;
+    for (auto &icmp_packet: icmp_packets)
+    {
+        auto icmp_request = icmp_packet.first;
+        auto icmp_reply = icmp_packet.second;
+        csv_file << icmp_request.get_icmp_type() << "," << icmp_request.get_id_number() << ","
+                 << icmp_request.get_sequence_number()
+                 << "," << icmp_request.get_sent_time().count() << "," << icmp_request.get_captured_time().count()
+                 << ","
+                 << icmp_request.get_data_len() << "," << icmp_request.get_signal_strength() << ","
+                 << icmp_request.get_wlan_duration() << std::endl;
+        csv_file << icmp_reply.get_icmp_type() << "," << icmp_reply.get_id_number() << ","
+                 << icmp_reply.get_sequence_number()
+                 << "," << icmp_reply.get_sent_time().count() << "," << icmp_reply.get_captured_time().count() << ","
+                 << icmp_reply.get_data_len() << "," << icmp_reply.get_signal_strength() << ","
+                 << icmp_reply.get_wlan_duration() << std::endl;
+    }
+    csv_file.close();
+
+}
+

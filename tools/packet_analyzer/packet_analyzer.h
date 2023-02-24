@@ -16,7 +16,10 @@
 #include "pcapplusplus/PcapLiveDeviceList.h"
 #include "pcapplusplus/SystemUtils.h"
 #include "pcapplusplus/IcmpLayer.h"
+#include "pcapplusplus/ArpLayer.h"
+#include "pcapplusplus/EthLayer.h"
 #include "pcapplusplus/PcapFileDevice.h"
+#include <random>
 #include <tuple>
 #include "icmp_analyzer.h"
 #include <tabulate/table.hpp>
@@ -41,15 +44,25 @@ public:
 
     void parse_packets();
 
+    void start_icmp_echo_experiment(const std::string &target_ip, int nb_packets, int packet_size, int interval);
+
+    static bool on_packet_arrives(pcpp::RawPacket *packet, pcpp::PcapLiveDevice *dev, void *cookie);
+
+    static void export_to_csv(const std::string &file_name,
+                              std::vector<std::pair<icmp_analyzer_monitor_packet, icmp_analyzer_monitor_packet>> &icmp_packets);
+
+    bool get_monitor_ssh_config();
+
     ~packet_analyzer();
 
 private:
     bool is_monitor_mode;
     ssh_config ssh_configuration;
     pcpp::PcapLiveDevice *m_device;
-    //pcpp::RawPacketVector packet_vector;
+    pcpp::RawPacketVector packet_vector;
 
-    std::vector<pcpp::RawPacket> packet_vector;
+    std::vector<pcpp::RawPacket> packet_vector_4_monitor;
+
 
     std::vector<std::tuple<std::chrono::duration<long, std::ratio<1, 1000000000>>, std::chrono::duration<long, std::ratio<1, 1000000000>>>> icmp_packet_timestamps;
 

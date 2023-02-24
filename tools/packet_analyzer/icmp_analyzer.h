@@ -19,12 +19,12 @@ enum icmp_type
     NOT_ICMP
 };
 
-class icmp_analyzer_packet
+class icmp_analyzer_monitor_packet
 {
 public:
-    icmp_analyzer_packet(const uint8_t *raw_data, int raw_data_len, timespec timestamp);
+    icmp_analyzer_monitor_packet(const uint8_t *raw_data, int raw_data_len, timespec timestamp);
 
-    icmp_analyzer_packet();
+    icmp_analyzer_monitor_packet();
 
     uint8_t get_byte_from_packet(int offset);
 
@@ -51,6 +51,12 @@ public:
 
     [[nodiscard]] std::chrono::duration<long, std::ratio<1, 1000000000>> get_captured_time() const;
 
+    [[nodiscard]] int get_data_len() const;
+
+    void set_sent_time(std::chrono::duration<long, std::ratio<1, 1000000000>> time);
+
+    void set_captured_time(std::chrono::duration<long, std::ratio<1, 1000000000>> time);
+
 
 private:
     icmp_type icmpType;
@@ -67,23 +73,28 @@ private:
 class icmp_analyzer_adapter
 {
 public:
-    icmp_analyzer_adapter(const icmp_analyzer_packet &icmp_packet);
+    icmp_analyzer_adapter(const icmp_analyzer_monitor_packet &icmp_packet);
 
     icmp_analyzer_adapter();
 
-    void add_icmp_packet(const icmp_analyzer_packet &icmp_packet);
+    void add_icmp_packet(const icmp_analyzer_monitor_packet &icmp_packet);
 
     size_t get_packet_count();
 
-    std::pair<icmp_analyzer_packet, icmp_analyzer_packet> get_icmp_req_rep(int sequence_number);
+    std::pair<icmp_analyzer_monitor_packet, icmp_analyzer_monitor_packet> get_icmp_req_rep(int sequence_number);
 
-    std::vector<std::pair<icmp_analyzer_packet, icmp_analyzer_packet>> get_icmp_req_rep_list();
+    std::vector<std::pair<icmp_analyzer_monitor_packet, icmp_analyzer_monitor_packet>> get_icmp_req_rep_list();
 
+    void change_echo_icmp_req_rep_time(int id_number, int sequence_number,
+                                       std::chrono::duration<long, std::ratio<1, 1000000000>> time);
+
+    void change_echo_icmp_captured_time(icmp_type type, int id_number, int sequence_number,
+                                        std::chrono::duration<long, std::ratio<1, 1000000000>> time);
 
     ~icmp_analyzer_adapter();
 
 private:
-    std::vector<icmp_analyzer_packet> icmp_packet_list;
+    std::vector<icmp_analyzer_monitor_packet> icmp_packet_list;
 };
 
 

@@ -8,36 +8,47 @@ int main(int argc, char *argv[])
 
     // Use cxxopts to parse the arguments
     cxxopts::Options options("platform", "");
-    options.add_options()("h,help", "Print this help message")("a,adhoc_setup",
-                                                               "Change the Raspberry PI network settings to ad-hoc mode",
-                                                               cxxopts::value<std::vector<std::string>>(),
-                                                               "<ssid> <ip> <number of channels>")("r,adhoc_reset",
-                                                                                                   "Reset the Raspberry PI network settings to default")(
-            "m,monitor_setup", "Set up the interface into monitor mode", cxxopts::value<std::string>(), "<interface>")(
-            "s,start", "Start a protocol", cxxopts::value<std::string>(), "<protocol>")("c,config",
-                                                                                        "Configure an option of the Raspberry PI wireless card",
-                                                                                        cxxopts::value<bool>(),
-                                                                                        "<option>");
-    options.add_options("Packet analysis")("P,print", "Print info for an interface", cxxopts::value<std::string>(),
-                                           "<interface>")("C,capture", "Capture packets on an interface",
-                                                          cxxopts::value<std::string>(), "<interface>");
-    options.add_options("Propagate remote operations")("p,propagate",
-                                                       "Propagate updates of files in directory over the network",
-                                                       cxxopts::value<std::vector<std::string>>(),
-                                                       "<interface to use> <platform's directory>")("i,install",
-                                                                                                    "Install a package on the Raspberry PI",
-                                                                                                    cxxopts::value<std::vector<std::string>>(),
-                                                                                                    "<interface to use> <package name(s)>")(
-            "S,send", "Send files to the Raspberry PI", cxxopts::value<std::vector<std::string>>(),
-            "<interface to use> <from directory> <to directory> \"<file(s)>\"")("R,run",
-                                                                                "Run command on all the Raspberry PIs",
-                                                                                cxxopts::value<std::vector<std::string>>(),
-                                                                                "<interface to use> <command>");
-    options.add_options("List of configuration")("rate", "Set the bit rate", cxxopts::value<std::string>(), "<rate>")(
-            "tx", "Set the transmitting power", cxxopts::value<std::string>(), "<power in dBm or mW>")("sensitivity",
-                                                                                                       "Set the threshold for sensitivity",
-                                                                                                       cxxopts::value<std::string>(),
-                                                                                                       "<threshold>");
+    options.add_options()
+            ("h,help", "Print this help message")
+            ("a,adhoc_setup", "Change the Raspberry PI network settings to ad-hoc mode",
+             cxxopts::value<std::vector<std::string>>(),
+             "<ssid> <ip> <number of channels>")
+            ("r,adhoc_reset",
+             "Reset the Raspberry PI network settings to default")
+            ("m,monitor_setup", "Set up the interface into monitor mode", cxxopts::value<std::string>(),
+             "<interface>")
+            ("s,start", "Start a protocol", cxxopts::value<std::string>(), "<protocol>")
+            ("c,config",
+             "Configure an option of the Raspberry PI wireless card",
+             cxxopts::value<bool>(),
+             "<option>");
+    options.add_options("Packet analysis")
+            ("P,print", "Print info for an interface", cxxopts::value<std::string>(), "<interface>")
+            ("C,capture", "Capture packets on an interface",
+             cxxopts::value<std::string>(), "<interface>")
+            ("l,launch", "Launch ping experiment", cxxopts::value<std::string>(),
+             "<interface> <target_ip> <number of packets> <packet size> <interval>");
+    options.add_options("Propagate remote operations")
+            ("p,propagate", "Propagate updates of files in directory over the network",
+             cxxopts::value<std::vector<std::string>>(),
+             "<interface to use> <platform's directory>")
+            ("i,install",
+             "Install a package on the Raspberry PI",
+             cxxopts::value<std::vector<std::string>>(),
+             "<interface to use> <package name(s)>")
+            ("S,send", "Send files to the Raspberry PI", cxxopts::value<std::vector<std::string>>(),
+             "<interface to use> <from directory> <to directory> \"<file(s)>\"")
+            ("R,run",
+             "Run command on all the Raspberry PIs",
+             cxxopts::value<std::vector<std::string>>(),
+             "<interface to use> <command>");
+    options.add_options("List of configuration")
+            ("rate", "Set the bit rate", cxxopts::value<std::string>(), "<rate>")
+            ("tx", "Set the transmitting power", cxxopts::value<std::string>(), "<power in dBm or mW>")(
+            "sensitivity",
+            "Set the threshold for sensitivity",
+            cxxopts::value<std::string>(),
+            "<threshold>");
 
     options.allow_unrecognised_options();
     if (argc < 2)
@@ -328,6 +339,33 @@ int main(int argc, char *argv[])
         std::cout << "Press any key to stop the capture." << std::endl;
         std::cin.get();
         analyzer.stop_capture();
+    }
+
+    if (result.count("launch"))
+    {
+        std::cout << "-- Launch the ping experiment --" << std::endl
+                  << std::endl;
+        if (!is_root())
+        {
+            exit(1);
+        }
+        std::string iface = result["launch"].as<std::string>();
+        std::cout << "Interface: " << iface << std::endl;
+        std::vector<std::string> unmatched = result.unmatched();
+        if (unmatched.size() != 4)
+        {
+            std::cout << "ERROR: Missing arguments." << std::endl;
+            std::cout << "Usage: " << argv[0]
+                      << " --launch <interface> <target_ip> <number of packets> <packet size> <interval in ms>"
+                      << std::endl;
+            exit(1);
+        }
+        std::string target_ip = unmatched[0];
+        int nb_packets = std::stoi(unmatched[1]);
+        int packet_size = std::stoi(unmatched[2]);
+        int interval = std::stoi(unmatched[3]);
+        packet_analyzer analyzer = packet_analyzer(iface);
+        analyzer.start_icmp_echo_experiment(target_ip, nb_packets, packet_size, interval);
     }
 
     // Configure the current Raspberry PI's WiFi interface
