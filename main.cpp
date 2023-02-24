@@ -27,7 +27,9 @@ int main(int argc, char *argv[])
             ("C,capture", "Capture packets on an interface",
              cxxopts::value<std::string>(), "<interface>")
             ("l,launch", "Launch ping experiment", cxxopts::value<std::string>(),
-             "<interface> <target_ip> <number of packets> <packet size> <interval>");
+             "<interface> <target_ip> <number of packets> <packet size> <interval>")
+            ("t,timestamp", "Launch timestamp experiment", cxxopts::value<std::string>(),
+             "<interface> <target_ip> <number of packets> <interval>");
     options.add_options("Propagate remote operations")
             ("p,propagate", "Propagate updates of files in directory over the network",
              cxxopts::value<std::vector<std::string>>(),
@@ -338,7 +340,7 @@ int main(int argc, char *argv[])
         analyzer.start_capture();
         std::cout << "Press any key to stop the capture." << std::endl;
         std::cin.get();
-        analyzer.stop_capture();
+        analyzer.stop_capture(experiment_type::SIMPLE_CAPTURE);
     }
 
     if (result.count("launch"))
@@ -366,6 +368,32 @@ int main(int argc, char *argv[])
         int interval = std::stoi(unmatched[3]);
         packet_analyzer analyzer = packet_analyzer(iface);
         analyzer.start_icmp_echo_experiment(target_ip, nb_packets, packet_size, interval);
+    }
+
+    if (result.count("timestamp"))
+    {
+        std::cout << "-- Launch the timestamp experiment --" << std::endl
+                  << std::endl;
+        if (!is_root())
+        {
+            exit(1);
+        }
+        std::string iface = result["timestamp"].as<std::string>();
+        std::cout << "Interface: " << iface << std::endl;
+        std::vector<std::string> unmatched = result.unmatched();
+        if (unmatched.size() != 3)
+        {
+            std::cout << "ERROR: Missing arguments." << std::endl;
+            std::cout << "Usage: " << argv[0]
+                      << " --timestamp <interface> <target_ip> <number of packets> <interval in ms>"
+                      << std::endl;
+            exit(1);
+        }
+        std::string target_ip = unmatched[0];
+        int nb_packets = std::stoi(unmatched[1]);
+        int interval = std::stoi(unmatched[2]);
+        packet_analyzer analyzer = packet_analyzer(iface);
+        analyzer.start_icmp_timestamp_experiment(target_ip, nb_packets, interval);
     }
 
     // Configure the current Raspberry PI's WiFi interface

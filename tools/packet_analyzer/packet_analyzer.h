@@ -29,7 +29,13 @@
 #include <jsoncpp/json/value.h>
 #include <fstream>
 
-#define IS_MONITOR_MODE 1
+
+enum experiment_type
+{
+    ICMP_ECHO,
+    ICMP_TIMESTAMP,
+    SIMPLE_CAPTURE
+};
 
 class packet_analyzer
 {
@@ -40,16 +46,29 @@ public:
 
     void start_capture();
 
-    void stop_capture();
+    void start_capture_for_experiment();
 
-    void parse_packets();
+    void stop_capture(experiment_type type);
+
+    void parse_simple_capture();
+
+    void parse_icmp_echo_packets();
+
+    void parse_icmp_timestamp_packets();
+
+    void get_hw_address(const std::string &ip_address, pcpp::MacAddress &hw_address);
 
     void start_icmp_echo_experiment(const std::string &target_ip, int nb_packets, int packet_size, int interval);
+
+    void start_icmp_timestamp_experiment(const std::string &target_ip, int nb_packets, int interval);
 
     static bool on_packet_arrives(pcpp::RawPacket *packet, pcpp::PcapLiveDevice *dev, void *cookie);
 
     static void export_to_csv(const std::string &file_name,
-                              std::vector<std::pair<icmp_analyzer_monitor_packet, icmp_analyzer_monitor_packet>> &icmp_packets);
+                              std::vector<std::pair<icmp_echo_analyzer_monitor_packet, icmp_echo_analyzer_monitor_packet>> &icmp_packets);
+
+    static void export_to_csv(const std::string &file_name,
+                              std::vector<std::pair<icmp_timestamp_analyzer_monitor_packet, icmp_timestamp_analyzer_monitor_packet>> &timestamp_packets);
 
     bool get_monitor_ssh_config();
 
@@ -65,8 +84,6 @@ private:
 
 
     std::vector<std::tuple<std::chrono::duration<long, std::ratio<1, 1000000000>>, std::chrono::duration<long, std::ratio<1, 1000000000>>>> icmp_packet_timestamps;
-
-    static std::string getProtocolTypeAsString(pcpp::ProtocolType protocolType);
 
 };
 
