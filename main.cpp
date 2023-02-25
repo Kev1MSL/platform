@@ -43,7 +43,9 @@ int main(int argc, char *argv[])
             ("R,run",
              "Run command on all the Raspberry PIs",
              cxxopts::value<std::vector<std::string>>(),
-             "<interface to use> <command>");
+             "<interface to use> <command>")
+            ("T,ntp", "Set the Raspberry PI ntp server", cxxopts::value<std::string>(),
+             "<interface to use> <ntp server ip>");
     options.add_options("List of configuration")
             ("rate", "Set the bit rate", cxxopts::value<std::string>(), "<rate>")
             ("tx", "Set the transmitting power", cxxopts::value<std::string>(), "<power in dBm or mW>")(
@@ -312,6 +314,48 @@ int main(int argc, char *argv[])
         }
     }
 
+    // Set the ntp server on all the Raspberry PIs on the network
+    if (result.count("ntp"))
+    {
+        std::cout << "-- Set the ntp server --" << std::endl
+                  << std::endl;
+        std::string iface = result["ntp"].as<std::string>();
+        std::vector<std::string> unmatched = result.unmatched();
+        if (unmatched.size() != 1)
+        {
+            std::cout << "ERROR: Missing arguments." << std::endl;
+            std::cout << "Usage: " << argv[0] << " --ntp <interface to use> <ntp server ip>" << std::endl;
+            exit(1);
+        }
+        std::string ntp_server = unmatched[0];
+        std::vector<ssh_config>
+                config = get_ssh_config();
+        if (config.empty())
+        {
+            std::cout << "ERROR: Unable to get the configuration of the Raspberry PI." << std::endl;
+            exit(1);
+        }
+        std::string ip = get_ip_address(iface);
+        for (auto &i: config)
+        {
+            if (i.host == ip)
+            {
+                std::cout << "Skip " << ip << " because it is the current host." << std::endl;
+                continue;
+            }
+            std::cout << "Begin to propagate ntp server on " << i.host << std::endl;
+            ssh_updater updater = ssh_updater(i);
+            if (updater.set_ntp_server(ntp_server) != 0)
+            {
+                std::cout << "ERROR: Unable to propagate ntp server on " << i.host << std::endl;
+            } else
+            {
+                std::cout << "Ntp server successfully propagated on " << i.host << std::endl;
+            }
+        }
+    }
+
+    // Print network interface info
     if (result.count("print"))
     {
         std::cout << "-- Print interface info --" << std::endl
@@ -326,6 +370,7 @@ int main(int argc, char *argv[])
         analyzer.print_device_info();
     }
 
+    // Start capture on the network interface
     if (result.count("capture"))
     {
         std::cout << "-- Capture packets --" << std::endl
@@ -343,6 +388,7 @@ int main(int argc, char *argv[])
         analyzer.stop_capture(experiment_type::SIMPLE_CAPTURE);
     }
 
+    // Launch the ping experiment - might require to have an extra RPI in monitor mode to get more data
     if (result.count("launch"))
     {
         std::cout << "-- Launch the ping experiment --" << std::endl
@@ -370,6 +416,7 @@ int main(int argc, char *argv[])
         analyzer.start_icmp_echo_experiment(target_ip, nb_packets, packet_size, interval);
     }
 
+    // Start the timestamp experiment - might require to have an extra RPI in monitor mode to get more data
     if (result.count("timestamp"))
     {
         std::cout << "-- Launch the timestamp experiment --" << std::endl

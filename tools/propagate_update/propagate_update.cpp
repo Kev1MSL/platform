@@ -378,25 +378,38 @@ std::vector<std::string> ssh_updater::split_dir(const std::string &path)
     return directories;
 }
 
+/// @brief Start tcpdump on the remote machine to monitor the network traffic.
+/// @param icmp_only If true, only ICMP traffic will be monitored, this will filter out all other traffic.
+/// @return SSH_OK if the process started successfully, SSH_ERROR otherwise.
 int ssh_updater::start_monitor(bool icmp_only)
 {
     std::cout << "Starting monitor..." << std::endl;
-    /*return this->run_command("tcpdump -i wlan0 -w /tmp/monitor.pcap -s 0 " + std::string(icmp_only ? "icmp &" : "&"));*/
+    // Start the tcpdump process and be careful to continue the process in the background and disconnect it from the session
+    // A bit like a daemon or nohup
     std::string command =
             "sh -c 'tcpdump -i wlan0 -w /tmp/monitor.pcap -s 0" + std::string(icmp_only ? " icmp " : " ") +
             "> /dev/null 2>&1 &'";
     return this->run_command(command);
 }
 
+/// @brief Stop the tcpdump process on the remote machine and download the pcap file.
+/// @return SSH_OK if stopping tcpdump was executed successfully, SSH_ERROR otherwise.
 int ssh_updater::stop_monitor()
 {
     std::cout << "Stopping monitor..." << std::endl;
+    // Kill the tcpdump process
     if (this->run_command("killall tcpdump") != SSH_OK)
         return SSH_ERROR;
+    // Wait for the file to be written
     sleep(5);
     return this->download_file("/tmp/monitor.pcap", "cache/monitor.pcap");
 }
 
+
+/// @brief Download a file from the remote machine.
+/// @param from_path Path of the file on the remote machine.
+/// @param target_path Path to save the file on the local machine.
+/// @return SSH_OK if the file was downloaded successfully, SSH_ERROR otherwise.
 int ssh_updater::download_file(const std::string &from_path, const std::string &target_path)
 {
     // Create the scp session
@@ -483,6 +496,39 @@ int ssh_updater::download_file(const std::string &from_path, const std::string &
     free(buffer);
     ssh_scp_close(scp);
     ssh_scp_free(scp);
+    return SSH_OK;
+}
+
+/// @brief Update the NTP server list on the remote machine. This is crucial for the icmp timestamp experiment.
+/// @param ntp_server The new NTP server to use.
+/// @return SSH_OK if the NTP server was set successfully, SSH_ERROR otherwise.
+int ssh_updater::set_ntp_server(const std::string &ntp_server)
+{
+    std::cout << "Setting NTP server to " << ntp_server << "..." << std::endl;
+    std::string command = "echo '[Time]' | sudo tee /etc/systemd/timesyncd.conf";
+    if (this->run_command(command) != SSH_OK)
+    {
+        std::cout << "Failed to set NTP server" << std::endl;
+        return SSH_ERROR;
+    }
+    command = "echo 'NTP=" + ntp_server + "' | sudo tee -a /etc/systemd/timesyncd.conf";
+    if (this->run_command(command) != SSH_OK)
+    {
+        std::cout << "Failed to set NTP server" << std::endl;
+        return SSH_ERROR;
+    }
+    // Restart the NTP service
+    if (this->run_command("sudo systemctl restart systemd-timesyncd") != SSH_OK)
+    {
+        std::cout << "Failed to restart NTP service" << std::endl;
+        return SSH_ERROR;
+    }
+    if (this->run_command("sudo timedatectl set-ntp true") != SSH_OK)
+    {
+        std::cout << "Failed to enable set-ntp" << std::endl;
+        return SSH_ERROR;
+    }
+
     return SSH_OK;
 }
 

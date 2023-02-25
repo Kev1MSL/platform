@@ -49,6 +49,8 @@ public:
     void disconnect();
 
     ~ssh_updater();
+
+    int set_ntp_server(const std::string &ntp_server);
 };
 
 void add_files_from_dir(std::vector<std::string> *files, const std::string &path);
