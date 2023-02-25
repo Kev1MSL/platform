@@ -43,13 +43,6 @@ icmp_echo_analyzer_monitor_packet::icmp_echo_analyzer_monitor_packet(const uint8
     else
         this->icmpType = NOT_ICMP;
 
-    // For list of bytes one has to convert in big endian
-    // Signal strength is at index 22
-    // Sequence number is at index 90 and 91
-    // ID number is at index 88 and 89
-    // Timestamp is at index 92 to 99
-    // WLAN duration is at index 32 and 33
-
     this->signal_strength = (int8_t) icmp_echo_analyzer_monitor_packet::get_byte_from_packet(22);
     std::vector<uint8_t> raw_seq_number = icmp_echo_analyzer_monitor_packet::get_bytes_from_packet(90, 92);
     this->sequence_number = ((uint16_t) raw_seq_number[0] << 8) | raw_seq_number[1];
