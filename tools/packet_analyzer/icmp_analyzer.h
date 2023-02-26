@@ -83,11 +83,11 @@ public:
 
     /// @brief Get the sent time of the request ICMP packet.
     /// @return The sent time of the requst ICMP packet in a chrono::duration object.
-    [[nodiscard]] std::chrono::duration<long, std::ratio<1, 1000000000>> get_sent_time() const;
+    [[nodiscard]] std::chrono::duration<uint64_t, std::ratio<1, 1000000000>> get_sent_time() const;
 
     /// @brief Get the captured time of the ICMP packet.
     /// @return The captured time of the ICMP packet in a chrono::duration object.
-    [[nodiscard]] std::chrono::duration<long, std::ratio<1, 1000000000>> get_captured_time() const;
+    [[nodiscard]] std::chrono::duration<uint64_t, std::ratio<1, 1000000000>> get_captured_time() const;
 
     /// @brief Get the length of the raw data of the packet.
     /// @return The length of the raw data of the packet.
@@ -95,11 +95,11 @@ public:
 
     /// @brief Set the sent time of the request ICMP packet from the platform RPI. It will replace the sent time of the monitor RPI, which might be wrong.
     /// @param time The sent time of the request ICMP packet in a chrono::duration object.
-    void set_sent_time(std::chrono::duration<long, std::ratio<1, 1000000000>> time);
+    void set_sent_time(std::chrono::duration<uint64_t, std::ratio<1, 1000000000>> time);
 
     /// @brief Set the captured time of the ICMP packet from the platform RPI. It will replace the captured time of the monitor RPI, which is wrong.
     /// @param time The captured time of the ICMP packet in a chrono::duration object.
-    void set_captured_time(std::chrono::duration<long, std::ratio<1, 1000000000>> time);
+    void set_captured_time(std::chrono::duration<uint64_t, std::ratio<1, 1000000000>> time);
 
 private:
     /// @brief Type of the ICMP packet
@@ -115,10 +115,10 @@ private:
     int id_number;
 
     /// @brief Sent time of the request ICMP packet
-    std::chrono::duration<long, std::ratio<1, 1000000000>> sent_time{};
+    std::chrono::duration<uint64_t, std::ratio<1, 1000000000>> sent_time{};
 
     /// @brief Captured time of the ICMP packet
-    std::chrono::duration<long, std::ratio<1, 1000000000>> captured_time{};
+    std::chrono::duration<uint64_t, std::ratio<1, 1000000000>> captured_time{};
 
     /// @brief Duration of the packet that blocked the interface/channel
     uint32_t wlan_duration;
@@ -157,7 +157,7 @@ public:
     /// @param sequence_number The sequence number of the ICMP echo packets to change.
     /// @param time The new sent time of the request ICMP echo packet in a chrono::duration object.
     void change_echo_icmp_req_rep_time(int id_number, int sequence_number,
-                                       std::chrono::duration<long, std::ratio<1, 1000000000>> time);
+                                       std::chrono::duration<uint64_t, std::ratio<1, 1000000000>> time);
 
     /// @brief Change the captured time of the ICMP echo packet to the given time from the platform RPI.
     /// @param type The type of the ICMP echo packet to change.
@@ -165,7 +165,7 @@ public:
     /// @param sequence_number The sequence number of the ICMP echo packet to change.
     /// @param time The new captured time of the ICMP echo packet in a chrono::duration object.
     void change_echo_icmp_captured_time(icmp_type type, int id_number, int sequence_number,
-                                        std::chrono::duration<long, std::ratio<1, 1000000000>> time);
+                                        std::chrono::duration<uint64_t, std::ratio<1, 1000000000>> time);
 
     ~icmp_echo_analyzer_adapter();
 
@@ -233,38 +233,38 @@ public:
 
     /// @brief Get the originate time of the request ICMP timestamp packet.
     /// @return The originate time of the requst ICMP packet in a chrono::duration object.
-    [[nodiscard]] std::chrono::duration<long, std::ratio<1, 1000000000>> get_orig_ts() const;
+    [[nodiscard]] std::chrono::duration<uint64_t, std::ratio<1, 1000000000>> get_orig_ts() const;
 
     /// @brief Get the received time of the request ICMP timestamp packet.
     /// @return The received time of ICMP timestamp packet in a chrono::duration object.
-    [[nodiscard]] std::chrono::duration<long, std::ratio<1, 1000000000>> get_received_ts() const;
+    [[nodiscard]] std::chrono::duration<uint64_t, std::ratio<1, 1000000000>> get_received_ts() const;
 
     /// @brief Get the transmit time of the replay ICMP timestamp packet.
     /// @return The transmit time of reply ICMP timestamp packet in a chrono::duration object.
-    [[nodiscard]] std::chrono::duration<long, std::ratio<1, 1000000000>> get_transmit_ts() const;
+    [[nodiscard]] std::chrono::duration<uint64_t, std::ratio<1, 1000000000>> get_transmit_ts() const;
 
     /// @brief Get the captured time of the packet.
     /// @return The captured time of the packet in a chrono::duration object.
-    [[nodiscard]] std::chrono::duration<long, std::ratio<1, 1000000000>> get_captured_time() const;
+    [[nodiscard]] std::chrono::duration<uint64_t, std::ratio<1, 1000000000>> get_captured_time() const;
 
     /// @brief Get the length of the raw data of the packet.
     [[nodiscard]] int get_data_len() const;
 
     /// @brief Set the originate time of the request ICMP timestamp packet.
     /// @param time The new originate time of the request ICMP timestamp packet in a chrono::duration object.
-    void set_orig_ts(std::chrono::duration<long, std::ratio<1, 1000000000>> time);
+    void set_orig_ts(std::chrono::duration<uint64_t, std::ratio<1, 1000000000>> time);
 
     /// @brief Set the received time of the request ICMP timestamp packet.
     /// @param time The new received time of the request ICMP timestamp packet in a chrono::duration object.
-    void set_received_ts(std::chrono::duration<long, std::ratio<1, 1000000000>> time);
+    void set_received_ts(std::chrono::duration<uint64_t, std::ratio<1, 1000000000>> time);
 
     /// @brief Set the transmit time of the reply ICMP timestamp packet.
     /// @param time The new transmit time of the reply ICMP timestamp packet in a chrono::duration object.
-    void set_transmit_ts(std::chrono::duration<long, std::ratio<1, 1000000000>> time);
+    void set_transmit_ts(std::chrono::duration<uint64_t, std::ratio<1, 1000000000>> time);
 
     /// @brief Set the captured time of the ICMP packet.
     /// @param time The new captured time of the ICMP packet in a chrono::duration object.
-    void set_captured_time(std::chrono::duration<long, std::ratio<1, 1000000000>> time);
+    void set_captured_time(std::chrono::duration<uint64_t, std::ratio<1, 1000000000>> time);
 
 private:
     /// @brief Type of the ICMP packet.
@@ -280,16 +280,16 @@ private:
     int id_number;
 
     /// @brief Originate time of the request ICMP timestamp packet.
-    std::chrono::duration<long, std::ratio<1, 1000000000>> orig_ts{};
+    std::chrono::duration<uint64_t, std::ratio<1, 1000000000>> orig_ts{};
 
     /// @brief Received time of the request ICMP timestamp packet.
-    std::chrono::duration<long, std::ratio<1, 1000000000>> received_ts{};
+    std::chrono::duration<uint64_t, std::ratio<1, 1000000000>> received_ts{};
 
     /// @brief Transmit time of the reply ICMP timestamp packet.
-    std::chrono::duration<long, std::ratio<1, 1000000000>> transmit_ts{};
+    std::chrono::duration<uint64_t, std::ratio<1, 1000000000>> transmit_ts{};
 
     /// @brief Captured time of the packet.
-    std::chrono::duration<long, std::ratio<1, 1000000000>> captured_time{};
+    std::chrono::duration<uint64_t, std::ratio<1, 1000000000>> captured_time{};
 
     /// @brief Duration of the packet.
     uint32_t wlan_duration;
@@ -329,28 +329,28 @@ public:
     /// @param sequence_number The sequence number of the ICMP timestamp packet to change.
     /// @param time The new captured time of the ICMP timestamp packet in a chrono::duration object.
     void change_timestamp_icmp_captured_time(icmp_type type, int id_number, int sequence_number,
-                                             std::chrono::duration<long, std::ratio<1, 1000000000>> time);
+                                             std::chrono::duration<uint64_t, std::ratio<1, 1000000000>> time);
 
     /// @brief Change the originate time of the ICMP timestamp request packet.
     /// @param id_number The id number of the ICMP timestamp request packet to change.
     /// @param sequence_number The sequence number of the ICMP request timestamp packet to change.
     /// @param time The new originate time of the ICMP timestamp request packet in a chrono::duration object.
     void change_timestamp_icmp_orig_ts(int id_number, int sequence_number,
-                                       std::chrono::duration<long, std::ratio<1, 1000000000>> time);
+                                       std::chrono::duration<uint64_t, std::ratio<1, 1000000000>> time);
 
     /// @brief Change the received time of the ICMP timestamp request packet on the other device.
     /// @param id_number The id number of the ICMP timestamp reply packet to change.
     /// @param sequence_number The sequence number of the ICMP reply timestamp packet to change.
     /// @param time The new received time of the ICMP timestamp reply packet in a chrono::duration object.
     void change_timestamp_icmp_received_ts(int id_number, int sequence_number,
-                                           std::chrono::duration<long, std::ratio<1, 1000000000>> time);
+                                           std::chrono::duration<uint64_t, std::ratio<1, 1000000000>> time);
 
     /// @brief Change the transmit time of the ICMP timestamp reply packet.
     /// @param id_number The id number of the ICMP timestamp reply packet to change.
     /// @param sequence_number The sequence number of the ICMP reply timestamp packet to change.
     /// @param time The new transmit time of the ICMP timestamp reply packet in a chrono::duration object.
     void change_timestamp_icmp_transmit_ts(int id_number, int sequence_number,
-                                           std::chrono::duration<long, std::ratio<1, 1000000000>> time);
+                                           std::chrono::duration<uint64_t, std::ratio<1, 1000000000>> time);
 
     ~icmp_timestamp_analyzer_adapter();
 

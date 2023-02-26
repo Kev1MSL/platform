@@ -1,26 +1,26 @@
 {
-	"nbr_rpi": 3,
-	"RPI_List": [
-		{
-			"RPI": "RPI_1",
-			"RPI_USER": "pi",
-			"RPI_PASS": "raspberry",
-			"RPI_IP": "192.168.1.1",
-			"RPI_STATUS": "OFF"
-		},
-		{
-			"RPI": "RPI_2",
-			"RPI_USER": "pi",
-			"RPI_PASS": "raspberry",
-			"RPI_IP": "192.168.1.2",
-			"RPI_STATUS": "ON"
-		},
-		{
-			"RPI": "RPI_3",
-			"RPI_USER": "pi",
-			"RPI_PASS": "raspberry",
-			"RPI_IP": "192.168.1.3",
-			"RPI_STATUS": "ON"
-		}
-	]
+  "nbr_rpi": 3,
+  "RPI_List": [
+    {
+      "RPI": "RPI_1",
+      "RPI_USER": "pi",
+      "RPI_PASS": "raspberry",
+      "RPI_IP": "192.168.1.1",
+      "RPI_STATUS": "ON"
+    },
+    {
+      "RPI": "RPI_2",
+      "RPI_USER": "pi",
+      "RPI_PASS": "raspberry",
+      "RPI_IP": "192.168.1.2",
+      "RPI_STATUS": "ON"
+    },
+    {
+      "RPI": "RPI_3",
+      "RPI_USER": "pi",
+      "RPI_PASS": "raspberry",
+      "RPI_IP": "192.168.1.3",
+      "RPI_STATUS": "ON"
+    }
+  ]
 }

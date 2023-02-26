@@ -121,7 +121,7 @@ icmp_echo_analyzer_adapter::get_icmp_req_rep_list()
     std::vector<std::pair<icmp_echo_analyzer_monitor_packet, icmp_echo_analyzer_monitor_packet>> icmp_req_rep_list;
     for (auto &packet: this->icmp_packet_list)
     {
-        // Filter out the ICMP replies to avoid duplicates. One we have the request, we can get the reply.
+        // Filter out the ICMP replies to avoid duplicates. Once we have the request, we can get the reply.
         if (packet.get_icmp_type() == ICMP_ECHO_REQUEST)
         {
             std::pair<icmp_echo_analyzer_monitor_packet, icmp_echo_analyzer_monitor_packet> icmp_req_rep = get_icmp_req_rep(
@@ -133,7 +133,7 @@ icmp_echo_analyzer_adapter::get_icmp_req_rep_list()
 }
 
 void icmp_echo_analyzer_adapter::change_echo_icmp_req_rep_time(int id_number, int sequence_number,
-                                                               std::chrono::duration<long, std::ratio<1, 1000000000>> time)
+                                                               std::chrono::duration<uint64_t, std::ratio<1, 1000000000>> time)
 {
     for (auto &packet: this->icmp_packet_list)
     {
@@ -147,7 +147,7 @@ void icmp_echo_analyzer_adapter::change_echo_icmp_req_rep_time(int id_number, in
 }
 
 void icmp_echo_analyzer_adapter::change_echo_icmp_captured_time(icmp_type type, int id_number, int sequence_number,
-                                                                std::chrono::duration<long, std::ratio<1, 1000000000>> time)
+                                                                std::chrono::duration<uint64_t, std::ratio<1, 1000000000>> time)
 {
     for (auto &packet: this->icmp_packet_list)
     {
@@ -238,22 +238,23 @@ uint32_t icmp_echo_analyzer_monitor_packet::get_wlan_duration() const
     return this->wlan_duration;
 }
 
-std::chrono::duration<long, std::ratio<1, 1000000000>> icmp_echo_analyzer_monitor_packet::get_sent_time() const
+std::chrono::duration<uint64_t, std::ratio<1, 1000000000>> icmp_echo_analyzer_monitor_packet::get_sent_time() const
 {
     return this->sent_time;
 }
 
-std::chrono::duration<long, std::ratio<1, 1000000000>> icmp_echo_analyzer_monitor_packet::get_captured_time() const
+std::chrono::duration<uint64_t, std::ratio<1, 1000000000>> icmp_echo_analyzer_monitor_packet::get_captured_time() const
 {
     return this->captured_time;
 }
 
-void icmp_echo_analyzer_monitor_packet::set_sent_time(std::chrono::duration<long, std::ratio<1, 1000000000>> time)
+void icmp_echo_analyzer_monitor_packet::set_sent_time(std::chrono::duration<uint64_t, std::ratio<1, 1000000000>> time)
 {
     this->sent_time = time;
 }
 
-void icmp_echo_analyzer_monitor_packet::set_captured_time(std::chrono::duration<long, std::ratio<1, 1000000000>> time)
+void
+icmp_echo_analyzer_monitor_packet::set_captured_time(std::chrono::duration<uint64_t, std::ratio<1, 1000000000>> time)
 {
     this->captured_time = time;
 }
@@ -398,17 +399,19 @@ uint32_t icmp_timestamp_analyzer_monitor_packet::get_wlan_duration() const
     return this->wlan_duration;
 }
 
-std::chrono::duration<long, std::ratio<1, 1000000000>> icmp_timestamp_analyzer_monitor_packet::get_orig_ts() const
+std::chrono::duration<uint64_t, std::ratio<1, 1000000000>> icmp_timestamp_analyzer_monitor_packet::get_orig_ts() const
 {
     return this->orig_ts;
 }
 
-std::chrono::duration<long, std::ratio<1, 1000000000>> icmp_timestamp_analyzer_monitor_packet::get_received_ts() const
+std::chrono::duration<uint64_t, std::ratio<1, 1000000000>>
+icmp_timestamp_analyzer_monitor_packet::get_received_ts() const
 {
     return this->received_ts;
 }
 
-std::chrono::duration<long, std::ratio<1, 1000000000>> icmp_timestamp_analyzer_monitor_packet::get_transmit_ts() const
+std::chrono::duration<uint64_t, std::ratio<1, 1000000000>>
+icmp_timestamp_analyzer_monitor_packet::get_transmit_ts() const
 {
     return this->transmit_ts;
 }
@@ -418,30 +421,33 @@ int icmp_timestamp_analyzer_monitor_packet::get_data_len() const
     return this->raw_data_len;
 }
 
-void icmp_timestamp_analyzer_monitor_packet::set_orig_ts(std::chrono::duration<long, std::ratio<1, 1000000000>> time)
+void
+icmp_timestamp_analyzer_monitor_packet::set_orig_ts(std::chrono::duration<uint64_t, std::ratio<1, 1000000000>> time)
 {
     this->orig_ts = time;
 }
 
 void
-icmp_timestamp_analyzer_monitor_packet::set_received_ts(std::chrono::duration<long, std::ratio<1, 1000000000>> time)
+icmp_timestamp_analyzer_monitor_packet::set_received_ts(std::chrono::duration<uint64_t, std::ratio<1, 1000000000>> time)
 {
     this->received_ts = time;
 }
 
 void
-icmp_timestamp_analyzer_monitor_packet::set_transmit_ts(std::chrono::duration<long, std::ratio<1, 1000000000>> time)
+icmp_timestamp_analyzer_monitor_packet::set_transmit_ts(std::chrono::duration<uint64_t, std::ratio<1, 1000000000>> time)
 {
     this->transmit_ts = time;
 }
 
-std::chrono::duration<long, std::ratio<1, 1000000000>> icmp_timestamp_analyzer_monitor_packet::get_captured_time() const
+std::chrono::duration<uint64_t, std::ratio<1, 1000000000>>
+icmp_timestamp_analyzer_monitor_packet::get_captured_time() const
 {
     return this->captured_time;
 }
 
 void
-icmp_timestamp_analyzer_monitor_packet::set_captured_time(std::chrono::duration<long, std::ratio<1, 1000000000>> time)
+icmp_timestamp_analyzer_monitor_packet::set_captured_time(
+        std::chrono::duration<uint64_t, std::ratio<1, 1000000000>> time)
 {
     this->captured_time = time;
 }
@@ -508,7 +514,7 @@ icmp_timestamp_analyzer_adapter::get_icmp_ts_req_rep_list()
 
 void
 icmp_timestamp_analyzer_adapter::change_timestamp_icmp_captured_time(icmp_type type, int id_number, int sequence_number,
-                                                                     std::chrono::duration<long, std::ratio<1, 1000000000>> time)
+                                                                     std::chrono::duration<uint64_t, std::ratio<1, 1000000000>> time)
 {
     for (auto &packet: this->icmp_packet_list)
     {
@@ -529,7 +535,7 @@ icmp_timestamp_analyzer_adapter::~icmp_timestamp_analyzer_adapter()
 }
 
 void icmp_timestamp_analyzer_adapter::change_timestamp_icmp_orig_ts(int id_number, int sequence_number,
-                                                                    std::chrono::duration<long, std::ratio<1, 1000000000>> time)
+                                                                    std::chrono::duration<uint64_t, std::ratio<1, 1000000000>> time)
 {
     for (auto &packet: this->icmp_packet_list)
     {
@@ -544,7 +550,7 @@ void icmp_timestamp_analyzer_adapter::change_timestamp_icmp_orig_ts(int id_numbe
 }
 
 void icmp_timestamp_analyzer_adapter::change_timestamp_icmp_received_ts(int id_number, int sequence_number,
-                                                                        std::chrono::duration<long, std::ratio<1, 1000000000>> time)
+                                                                        std::chrono::duration<uint64_t, std::ratio<1, 1000000000>> time)
 {
     for (auto &packet: this->icmp_packet_list)
     {
@@ -560,7 +566,7 @@ void icmp_timestamp_analyzer_adapter::change_timestamp_icmp_received_ts(int id_n
 }
 
 void icmp_timestamp_analyzer_adapter::change_timestamp_icmp_transmit_ts(int id_number, int sequence_number,
-                                                                        std::chrono::duration<long, std::ratio<1, 1000000000>> time)
+                                                                        std::chrono::duration<uint64_t, std::ratio<1, 1000000000>> time)
 {
     for (auto &packet: this->icmp_packet_list)
     {
