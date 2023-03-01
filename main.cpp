@@ -17,7 +17,6 @@ int main(int argc, char *argv[])
              "Reset the Raspberry PI network settings to default")
             ("m,monitor_setup", "Set up the interface into monitor mode", cxxopts::value<std::string>(),
              "<interface>")
-            ("s,start", "Start a protocol", cxxopts::value<std::string>(), "<protocol>")
             ("c,config",
              "Configure an option of the Raspberry PI wireless card",
              cxxopts::value<bool>(),
