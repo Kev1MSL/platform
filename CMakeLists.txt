@@ -29,7 +29,7 @@ add_executable(
         tools/propagate_update/propagate_update.cpp
         tools/propagate_update/propagate_update.h
         tools/packet_analyzer/packet_analyzer.cpp
-        tools/packet_analyzer/packet_analyzer.h tools/packet_analyzer/icmp_analyzer.cpp tools/packet_analyzer/icmp_analyzer.h)
+        tools/packet_analyzer/packet_analyzer.h tools/packet_analyzer/icmp_analyzer.cpp tools/packet_analyzer/icmp_analyzer.h tools/rfi_generator/rfi_generator.cpp tools/rfi_generator/rfi_generator.h)
 
 add_subdirectory(extern/cxxopts)
 add_subdirectory(extern/tabulate)

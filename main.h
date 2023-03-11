@@ -20,6 +20,7 @@
 #include "tools/config/config.h"
 #include "tools/propagate_update/propagate_update.h"
 #include "tools/packet_analyzer/packet_analyzer.h"
+#include "tools/rfi_generator/rfi_generator.h"
 
 std::vector<ssh_config> get_ssh_config(const std::string &path = PATH);
 

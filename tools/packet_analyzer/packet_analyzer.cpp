@@ -572,3 +572,13 @@ void packet_analyzer::export_to_csv(
     }
     csv_file.close();
 }
+
+void packet_analyzer::send_packet(pcpp::Packet *packet)
+{
+    this->m_device->sendPacket(packet);
+}
+
+pcpp::MacAddress packet_analyzer::get_current_device_hw_address()
+{
+    return this->m_device->getMacAddress();
+}

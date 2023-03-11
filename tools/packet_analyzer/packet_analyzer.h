@@ -45,7 +45,7 @@ class packet_analyzer
 {
 public:
     /// @brief Constructor for packet analyzer.
-    /// @param device_name The name of the device to analyze.
+    /// @param device_name The name of the interface to use for analyze.
     packet_analyzer(const std::string &device_name);
 
     /// @brief Print the device info.
@@ -112,6 +112,14 @@ public:
     /// @brief Get the monitoring ssh configuration from the config file at static/monitor.json
     /// @return True if filtering only icmp packets, false otherwise.
     bool get_monitor_ssh_config();
+
+    /// @brief Send a packet from the defined interface.
+    /// @param packet The packet to send.
+    void send_packet(pcpp::Packet *packet);
+
+    /// @brief Get the defined interface hardware address.
+    /// @return The hardware address of the defined interface.
+    pcpp::MacAddress get_current_device_hw_address();
 
     ~packet_analyzer();
 

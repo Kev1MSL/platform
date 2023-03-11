@@ -11,6 +11,7 @@
 
 #define PATH "/home/pi/Documents/Kevin_Bachelor_Thesis"
 
+/// @brief Struct to hold the SSH configuration.
 typedef struct
 {
     std::string host;

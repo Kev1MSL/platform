@@ -52,6 +52,15 @@ int main(int argc, char *argv[])
             "Set the threshold for sensitivity",
             cxxopts::value<std::string>(),
             "<threshold>");
+    options.add_options("RFI generation")
+            ("f,ping_flood", "Launch ping flood", cxxopts::value<std::string>(),
+             "<interface> <target_ip> <packet_size> <interval in ms>")
+            ("fd,ping_flood_duration", "Launch ping flood with duration", cxxopts::value<std::string>(),
+             "<interface> <target_ip> <packet_size> <duration> <interval in ms>")
+            ("ping", "Send ping request(s)", cxxopts::value<std::string>(),
+             "<interface> <target_ip> <number of packets> <packet size> <interval>")
+            ("F,malformed_flood", "Send a malformed association requests to the target", cxxopts::value<std::string>(),
+             "<interface> <fake_source_ip> <target_ip> <packet_size> <interval in ms>");
 
     options.allow_unrecognised_options();
     if (argc < 2)
@@ -440,6 +449,113 @@ int main(int argc, char *argv[])
         int interval = std::stoi(unmatched[2]);
         packet_analyzer analyzer = packet_analyzer(iface);
         analyzer.start_icmp_timestamp_experiment(target_ip, nb_packets, interval);
+    }
+
+    // RFI generation
+    // Classic ping flood
+    if (result.count("ping_flood"))
+    {
+        std::cout << "-- Launch the ping flood RFI --" << std::endl
+                  << std::endl;
+        if (!is_root())
+        {
+            exit(1);
+        }
+        std::string iface = result["ping_flood"].as<std::string>();
+        std::cout << "Interface: " << iface << std::endl;
+        const std::vector<std::string> &unmatched = result.unmatched();
+        if (unmatched.size() != 3)
+        {
+            std::cout << "ERROR: Missing arguments." << std::endl;
+            std::cout << "Usage: " << argv[0]
+                      << " --ping_flood <interface> <target_ip> <packet_size> <interval in ms>"
+                      << std::endl;
+            exit(1);
+        }
+        const std::string &target_ip = unmatched[0];
+        int packet_size = std::stoi(unmatched[1]);
+        int interval = std::stoi(unmatched[2]);
+        rfi_generator generator = rfi_generator(iface, target_ip);
+        std::cout << "Starting the ping flood... Press CTRL+C to stop the flood" << std::endl;
+        generator.start_ping_flood(packet_size, interval);
+    }
+    // Ping flood for a duration
+    if (result.count("ping_flood_duration"))
+    {
+        std::cout << "-- Launch the ping flood RFI for a duration --" << std::endl
+                  << std::endl;
+        if (!is_root())
+        {
+            exit(1);
+        }
+        std::string iface = result["ping_flood"].as<std::string>();
+        std::cout << "Interface: " << iface << std::endl;
+        const std::vector<std::string> &unmatched = result.unmatched();
+        if (unmatched.size() != 4)
+        {
+            std::cout << "ERROR: Missing arguments." << std::endl;
+            std::cout << "Usage: " << argv[0]
+                      << " --ping_flood_duration <interface> <target_ip> <packet_size> <duration> <interval in ms>"
+                      << std::endl;
+            exit(1);
+        }
+        const std::string &target_ip = unmatched[0];
+        int packet_size = std::stoi(unmatched[1]);
+        int duration = std::stoi(unmatched[2]);
+        int interval = std::stoi(unmatched[3]);
+        rfi_generator generator = rfi_generator(iface, target_ip);
+        std::cout << "Starting the ping flood for " << duration << "ms..." << std::endl;
+        generator.start_ping_flood_duration(packet_size, duration, interval);
+    }
+
+    if (result.count("ping"))
+    {
+        std::cout << "-- Launch ping requests --" << std::endl
+                  << std::endl;
+        if (!is_root())
+        {
+            exit(1);
+        }
+        std::string iface = result["ping"].as<std::string>();
+        std::cout << "Interface: " << iface << std::endl;
+        const std::vector<std::string> &unmatched = result.unmatched();
+        if (unmatched.size() != 4)
+        {
+            std::cout << "ERROR: Missing arguments." << std::endl;
+            std::cout << "Usage: " << argv[0]
+                      << " --ping <interface> <target_ip> <number of packets> <packet size> <interval>"
+                      << std::endl;
+            exit(1);
+        }
+        const std::string &target_ip = unmatched[0];
+        int nb_packets = std::stoi(unmatched[1]);
+        int packet_size = std::stoi(unmatched[2]);
+        int interval = std::stoi(unmatched[3]);
+        rfi_generator generator = rfi_generator(iface, target_ip);
+        std::cout << "Starting the ping requests..." << std::endl;
+        generator.send_ping(nb_packets, packet_size, interval);
+    }
+
+    if (result.count("malformed_flood"))
+    {
+        std::cout << "-- Launch the malformed flood RFI --" << std::endl
+                  << std::endl;
+        if (!is_root())
+        {
+            exit(1);
+        }
+        std::string iface = result["malformed_flood"].as<std::string>();
+        std::cout << "Interface: " << iface << std::endl;
+        const std::vector<std::string> &unmatched = result.unmatched();
+        if (unmatched.size() != 4)
+        {
+            std::cout << "ERROR: Missing arguments." << std::endl;
+            std::cout << "Usage: " << argv[0]
+                      << " --malformed_flood <interface> <fake_source_ip> <target_ip> <packet_size> <interval in ms>"
+                      << std::endl;
+            exit(1);
+        }
+        std::cout << "Feature not implemented yet." << std::endl;
     }
 
     // Configure the current Raspberry PI's WiFi interface
