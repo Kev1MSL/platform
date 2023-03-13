@@ -387,7 +387,7 @@ int ssh_updater::start_monitor(bool icmp_only)
     // Start the tcpdump process and be careful to continue the process in the background and disconnect it from the session
     // A bit like a daemon or nohup
     std::string command =
-            "sh -c 'tcpdump -i wlan0 -w /tmp/monitor.pcap -s 0" + std::string(icmp_only ? " icmp " : " ") +
+            "sh -c 'tcpdump -i mon0 -w /tmp/monitor.pcap -s 0" + std::string(icmp_only ? " icmp " : " ") +
             "> /dev/null 2>&1 &'";
     return this->run_command(command);
 }

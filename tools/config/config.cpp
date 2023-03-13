@@ -4,20 +4,38 @@
 
 #include "config.h"
 
-void change_tx_power(const std::string &tx_power) {
-    std::string command = "sudo iwconfig wlan0 txpower " + tx_power;
+void change_tx_power(const std::string &tx_power)
+{
+    std::string command = "sudo iw dev wlan0 set txpower " + tx_power;
     system(command.c_str());
     std::cout << "TX Power changed to " << tx_power << "dBm" << std::endl;
 }
 
-void change_rate(const std::string &rate) {
+void change_rate(const std::string &rate)
+{
+    // iw dev wlan0 set birates
     std::string command = "sudo iwconfig wlan0 rate " + rate;
     system(command.c_str());
     std::cout << "Rate changed to " << rate << "Mb/s" << std::endl;
 }
 
-void change_sensitivity(const std::string &sensitivity) {
+void change_sensitivity(const std::string &sensitivity)
+{
     std::string command = "sudo iwconfig wlan0 sens " + sensitivity;
     system(command.c_str());
     std::cout << "Threshold sensitivity changed to " << sensitivity << std::endl;
+}
+
+void change_channel(const std::string &channel)
+{
+    std::string command = "sudo iw wlan0 channel " + channel;
+    system(command.c_str());
+    std::cout << "Channel changed to " << channel << std::endl;
+}
+
+void change_bandwidth(int channel, const std::string &bandwidth)
+{
+    std::string command = "sudo iw set channel " + std::to_string(channel) + bandwidth;
+    system(command.c_str());
+    std::cout << "Bandwidth changed to " << bandwidth << std::endl;
 }
