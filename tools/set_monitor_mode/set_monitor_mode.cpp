@@ -12,6 +12,6 @@ void set_monitor_mode(const std::string &iface)
     system(cmd.c_str());
     cmd = "sudo ifconfig " + iface + " up";
     system(cmd.c_str());
-    cmd = "sudo iwconfig " + iface + " channel 4";
+    cmd = "sudo iwconfig " + iface + " channel 1";
     system(cmd.c_str());
 }
