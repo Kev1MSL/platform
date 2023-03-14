@@ -39,3 +39,17 @@ void change_bandwidth(int channel, const std::string &bandwidth)
     system(command.c_str());
     std::cout << "Bandwidth changed to " << bandwidth << std::endl;
 }
+
+void turn_off_interface(const std::string &interface)
+{
+    std::string command = "sudo ifconfig " + interface + " down";
+    system(command.c_str());
+    std::cout << "Interface " << interface << " turned off" << std::endl;
+}
+
+void turn_on_interface(const std::string &interface)
+{
+    std::string command = "sudo ifconfig " + interface + " up";
+    system(command.c_str());
+    std::cout << "Interface " << interface << " turned on" << std::endl;
+}

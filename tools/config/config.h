@@ -18,4 +18,8 @@ void change_channel(const std::string &channel);
 
 void change_bandwidth(int channel, const std::string &bandwidth);
 
+void turn_off_interface(const std::string &interface);
+
+void turn_on_interface(const std::string &interface);
+
 #endif //PLATFORM_CONFIG_H
