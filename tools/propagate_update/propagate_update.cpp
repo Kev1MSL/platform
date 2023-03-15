@@ -128,6 +128,7 @@ int ssh_updater::run_command(const std::string &command)
     nbytes = ssh_channel_read(channel, buffer, sizeof(buffer), 0);
     while (nbytes > 0)
     {
+        // Print the output of the command
         if (write(1, buffer, nbytes) != (int) nbytes)
         {
             ssh_channel_close(channel);
@@ -135,6 +136,7 @@ int ssh_updater::run_command(const std::string &command)
             return SSH_ERROR;
         }
         nbytes = ssh_channel_read(channel, buffer, sizeof(buffer), 0);
+
     }
 
     // Close the channel in case of error
@@ -175,6 +177,12 @@ int ssh_updater::install_packages(const std::vector<std::string> &packages)
     for (std::string package: packages)
     {
         packages_string += package + " ";
+    }
+
+    // Check if directory temp_deb exists, if it does, delete the content and the directory
+    if (std::filesystem::exists("temp_deb"))
+    {
+        std::filesystem::remove_all("temp_deb");
     }
 
     // Create a local directory to store the packages and their dependencies that we will download

@@ -4,3 +4,6 @@
 [submodule "extern/tabulate"]
 	path = extern/tabulate
 	url = https://github.com/p-ranav/tabulate
+[submodule "extern/libtins"]
+	path = extern/libtins
+	url = https://github.com/mfontanini/libtins
