@@ -7,6 +7,7 @@
 
 #include <string>
 #include "../packet_analyzer/packet_analyzer.h"
+#include "tins/tins.h"
 
 /// @brief RFI generator class, used to generate RFI on a given interface.
 class rfi_generator
@@ -37,11 +38,12 @@ public:
     /// @param interval The interval between each packet in ms.
     void send_ping(int num_packets, int packet_size, int interval = 0);
 
-    /// @brief [Feature not implemented yet] Send a flood of malformed association requests to the target, to cause a denial of service. This function requires to have the interface in monitor mode.
+    /// @brief Send a flood of malformed association requests to the target, to cause a denial of service. This function requires to have the interface in monitor mode.
     /// @param fake_source_ip The fake source IP address to use in the malformed association requests.
     /// @param packet_size The size of each packet.
     /// @param interval The interval between each packet in ms.
-    void send_malformed_association_request_flood(const std::string &fake_source_ip, int packet_size, int interval);
+    [[noreturn]] void
+    send_malformed_association_request_flood(const std::string &fake_source_ip, int packet_size, int interval);
 
 private:
     std::string target_address;

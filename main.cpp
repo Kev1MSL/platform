@@ -555,7 +555,14 @@ int main(int argc, char *argv[])
                       << std::endl;
             exit(1);
         }
-        std::cout << "Feature not implemented yet." << std::endl;
+        const std::string &fake_source_ip = unmatched[0];
+        const std::string &target_ip = unmatched[1];
+        int packet_size = std::stoi(unmatched[2]);
+        int interval = std::stoi(unmatched[3]);
+        rfi_generator generator = rfi_generator(iface, target_ip);
+        std::cout << "Starting the malformed flood... Press CTRL+C to stop the flood" << std::endl;
+        generator.send_malformed_association_request_flood(fake_source_ip, packet_size, interval);
+        
     }
 
     // Configure the current Raspberry PI's WiFi interface
