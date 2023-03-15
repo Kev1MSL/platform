@@ -33,5 +33,6 @@ add_executable(
 
 add_subdirectory(extern/cxxopts)
 add_subdirectory(extern/tabulate)
-target_include_directories(${PROJECT_NAME} PUBLIC cxxopts tabulate)
-target_link_libraries(${PROJECT_NAME} PUBLIC cxxopts jsoncpp ssh PcapPlusPlus::PcapPlusPlus tabulate)
+add_subdirectory(extern/libtins)
+target_include_directories(${PROJECT_NAME} PUBLIC cxxopts tabulate libtins)
+target_link_libraries(${PROJECT_NAME} PUBLIC cxxopts jsoncpp ssh PcapPlusPlus::PcapPlusPlus tabulate libtins)
