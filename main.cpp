@@ -60,7 +60,7 @@ int main(int argc, char *argv[])
             ("ping", "Send ping request(s)", cxxopts::value<std::string>(),
              "<interface> <target_ip> <number of packets> <packet size> <interval>")
             ("F,malformed_flood", "Send a malformed association requests to the target", cxxopts::value<std::string>(),
-             "<interface> <fake_source_ip> <target_ip> <packet_size> <interval in ms>");
+             "<interface> <monitor_interface> <fake_source_ip> <target_ip> <interval in ms>");
 
     options.allow_unrecognised_options();
     if (argc < 2)
@@ -551,18 +551,18 @@ int main(int argc, char *argv[])
         {
             std::cout << "ERROR: Missing arguments." << std::endl;
             std::cout << "Usage: " << argv[0]
-                      << " --malformed_flood <interface> <fake_source_ip> <target_ip> <packet_size> <interval in ms>"
+                      << " --malformed_flood <interface> <monitor_interface> <fake_source_ip> <target_ip> <interval in ms>"
                       << std::endl;
             exit(1);
         }
-        const std::string &fake_source_ip = unmatched[0];
-        const std::string &target_ip = unmatched[1];
-        int packet_size = std::stoi(unmatched[2]);
+        const std::string &monitor_iface = unmatched[0];
+        const std::string &fake_source_ip = unmatched[1];
+        const std::string &target_ip = unmatched[2];
         int interval = std::stoi(unmatched[3]);
         rfi_generator generator = rfi_generator(iface, target_ip);
         std::cout << "Starting the malformed flood... Press CTRL+C to stop the flood" << std::endl;
-        generator.send_malformed_association_request_flood(fake_source_ip, packet_size, interval);
-        
+        generator.send_malformed_association_request_flood(monitor_iface, fake_source_ip, interval);
+
     }
 
     // Configure the current Raspberry PI's WiFi interface

@@ -17,15 +17,6 @@ rfi_generator::rfi_generator(const std::string &iface, const std::string &ip_add
         std::cout << "Could not get the hardware address of the target." << std::endl;
         exit(1);
     }
-    /*this->m_device = pcpp::PcapLiveDeviceList::getInstance().getPcapLiveDeviceByName(iface);
-    if (this->m_device == nullptr)
-    {
-        throw std::runtime_error("Device not found");
-    }
-    if (!this->m_device->open())
-    {
-        throw std::runtime_error("Cannot open device");
-    }*/
 }
 
 void rfi_generator::send_ping(int num_packets, int packet_size, int interval)
@@ -101,10 +92,11 @@ void rfi_generator::start_ping_flood_duration(int packet_size, int duration, int
 
 }
 
-void rfi_generator::send_malformed_association_request_flood(const std::string &fake_source_ip, int packet_size,
+void rfi_generator::send_malformed_association_request_flood(const std::string &monitor_interface,
+                                                             const std::string &fake_source_ip,
                                                              int interval)
 {
-    /** TODO: Add support for sending malformed association requests
+    /**
      * Python code to generate the malformed association request using scapy
      *
      * from scapy.all import *
@@ -130,7 +122,7 @@ void rfi_generator::send_malformed_association_request_flood(const std::string &
     while (true)
     {
         radio_tap.inner_pdu(dot11);
-        sender.send(radio_tap, this->interface);
+        sender.send(radio_tap, monitor_interface);
         if (interval > 0)
             std::this_thread::sleep_for(std::chrono::milliseconds(interval));
     }
