@@ -368,7 +368,7 @@ void packet_analyzer::parse_icmp_timestamp_packets()
     packet_analyzer::export_to_csv(timestamp_packets);
 }
 
-bool packet_analyzer::on_packet_arrives(pcpp::RawPacket *packet, pcpp::PcapLiveDevice *dev, void *cookie)
+bool packet_analyzer::on_ARP_response_arrive(pcpp::RawPacket *packet, pcpp::PcapLiveDevice *dev, void *cookie)
 {
     pcpp::Packet parsedPacket(packet);
     if (parsedPacket.isPacketOfType(pcpp::ARP))
@@ -399,7 +399,7 @@ void packet_analyzer::get_hw_address(const std::string &ip_address, pcpp::MacAdd
     arpPacket.addLayer(&arpLayer);
     arpPacket.computeCalculateFields();
     this->m_device->sendPacket(&arpPacket);
-    this->m_device->startCaptureBlockingMode(on_packet_arrives, &hw_address, 1000);
+    this->m_device->startCaptureBlockingMode(on_ARP_response_arrive, &hw_address, 1000);
 }
 
 void

@@ -93,7 +93,7 @@ public:
     /// @param dev The device that the packet arrived on.
     /// @param cookie A cookie that can be used to store data.
     /// @return True if the experiment should continue, false otherwise.
-    static bool on_packet_arrives(pcpp::RawPacket *packet, pcpp::PcapLiveDevice *dev, void *cookie);
+    static bool on_ARP_response_arrive(pcpp::RawPacket *packet, pcpp::PcapLiveDevice *dev, void *cookie);
 
     /// @brief Export to CSV file the results from the ICMP echo experiment.
     /// @param file_name The name of the file to export to. By default results/icmp_echo_experiment.csv.

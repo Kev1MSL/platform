@@ -18,6 +18,10 @@ public:
     /// @param ip_address The IP address of the target.
     rfi_generator(const std::string &iface, const std::string &ip_address);
 
+    /// @brief Constructor for RFI generator on a monitor interface.
+    /// @param mon_iface The monitor interface to generate RFI on.
+    rfi_generator(const std::string &mon_iface);
+
     /// @brief Destructor for RFI generator.
     ~rfi_generator();
 
@@ -39,12 +43,12 @@ public:
     void send_ping(int num_packets, int packet_size, int interval = 0);
 
     /// @brief Send a flood of malformed association requests to the target, to cause a denial of service. This function requires to have the interface in monitor mode.
-    /// @param fake_source_ip The fake source IP address to use in the malformed association requests.
-    /// @param packet_size The size of each packet.
+    /// @param fake_victim1_hw_address The fake source IP address to use in the malformed association requests.
+    /// @param fake_victim2_hw_address The fake destination IP address to use in the malformed association requests.
     /// @param interval The interval between each packet in ms.
-    /// @param monitor_interface The interface to use in monitor mode, in which the packets will be injected.
     [[noreturn]] void
-    send_malformed_association_request_flood(const std::string &monitor_interface, const std::string &fake_source_ip,
+    send_malformed_association_request_flood(const std::string &fake_victim1_hw_address,
+                                             const std::string &fake_victim2_hw_address,
                                              int interval);
 
 private:
