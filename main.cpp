@@ -60,6 +60,9 @@ int main(int argc, char *argv[])
             ("ping", "Send ping request(s)", cxxopts::value<std::string>(),
              "<interface> <target_ip> <number of packets> <packet size> <interval>")
             ("F,malformed_flood", "Send a malformed association requests to the target", cxxopts::value<std::string>(),
+             "<interface> <victim1_hw_address> <vitim2_hw_address> <interval in ms>")
+            ("start-mf", "Start malformed association request flood on the monitor node",
+             cxxopts::value<std::string>(),
              "<interface> <monitor_interface> <fake_source_ip> <target_ip> <interval in ms>");
 
     options.allow_unrecognised_options();
@@ -547,21 +550,82 @@ int main(int argc, char *argv[])
         std::string iface = result["malformed_flood"].as<std::string>();
         std::cout << "Interface: " << iface << std::endl;
         const std::vector<std::string> &unmatched = result.unmatched();
-        if (unmatched.size() != 4)
+        if (unmatched.size() != 3)
         {
             std::cout << "ERROR: Missing arguments." << std::endl;
             std::cout << "Usage: " << argv[0]
-                      << " --malformed_flood <interface> <monitor_interface> <fake_source_ip> <target_ip> <interval in ms>"
+                      << " --malformed_flood <interface> <victim1_hw_address> <vitim2_hw_address> <interval in ms>"
                       << std::endl;
             exit(1);
         }
         const std::string &monitor_iface = unmatched[0];
-        const std::string &fake_source_ip = unmatched[1];
-        const std::string &target_ip = unmatched[2];
+        const std::string &victim1_hw_address = unmatched[1];
+        const std::string &vitim2_hw_address = unmatched[2];
         int interval = std::stoi(unmatched[3]);
-        rfi_generator generator = rfi_generator(iface, target_ip);
+        rfi_generator generator = rfi_generator(iface);
         std::cout << "Starting the malformed flood... Press CTRL+C to stop the flood" << std::endl;
-        generator.send_malformed_association_request_flood(monitor_iface, fake_source_ip, interval);
+        generator.send_malformed_association_request_flood(victim1_hw_address, vitim2_hw_address, interval);
+
+    }
+
+    if (result.count("start-mf"))
+    {
+        std::cout << "-- Launch the malformed flood RFI on monitor node --" << std::endl
+                  << std::endl;
+        if (!is_root())
+        {
+            exit(1);
+        }
+        std::string iface = result["start-mf"].as<std::string>();
+        std::cout << "Interface: " << iface << std::endl;
+        const std::vector<std::string> &unmatched = result.unmatched();
+        if (unmatched.size() != 4)
+        {
+            std::cout << "ERROR: Missing arguments." << std::endl;
+            std::cout << "Usage: " << argv[0]
+                      << " --start-mf <interface> <monitor_interface> <fake_source_ip> <target_ip> <interval in ms>"
+                      << std::endl;
+            exit(1);
+        }
+
+        const std::string &monitor_iface = unmatched[0];
+        const std::string &victim1_ip_address = unmatched[1];
+        const std::string &victim2_ip_address = unmatched[2];
+        int interval = std::stoi(unmatched[3]);
+        packet_analyzer analyzer = packet_analyzer(iface);
+        std::cout << "Starting the malformed flood... Getting hardware addresses of victim nodes" << std::endl;
+        pcpp::MacAddress victim1_hw_address, victim2_hw_address;
+        analyzer.get_hw_address(victim1_ip_address, victim1_hw_address);
+        analyzer.get_hw_address(victim2_ip_address, victim2_hw_address);
+        std::cout << "Victim 1: " << victim1_hw_address.toString() << std::endl;
+        std::cout << "Victim 2: " << victim2_hw_address.toString() << std::endl;
+        ssh_config config;
+        analyzer.get_monitor_ssh_config(config);
+        ssh_updater updater = ssh_updater(config);
+
+        // Launch the malformed flood on the monitor node in background
+        std::string command2launch_monitor =
+                "sh -c './home/pi/Documents/Kevin_Bachelor_Thesis/platform/platform --malformed_flood" + monitor_iface +
+                " " + victim1_hw_address.toString() + " " + victim2_hw_address.toString() + " " +
+                std::to_string(interval) +
+                "> /dev/null 2>&1 &'";
+
+        if (updater.run_command(command2launch_monitor) != 0)
+        {
+            std::cout << "ERROR: Failed to launch the malformed flood on the monitor node" << std::endl;
+            exit(1);
+        }
+
+        std::cout << "Malformed flood launched on the monitor node, press any key to stop the flood" << std::endl;
+        std::cin.get();
+        std::cout << "Stopping the malformed flood..." << std::endl;
+        std::string command2stop_monitor = "killall platform";
+        if (updater.run_command(command2stop_monitor) != 0)
+        {
+            std::cout << "ERROR: Failed to stop the malformed flood on the monitor node" << std::endl;
+            exit(1);
+        }
+
 
     }
 

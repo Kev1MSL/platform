@@ -113,6 +113,9 @@ public:
     /// @return True if filtering only icmp packets, false otherwise.
     bool get_monitor_ssh_config();
 
+    /// @brief Get the monitoring ssh configuration from the config file at static/monitor.jso
+    void get_monitor_ssh_config(ssh_config &ssh_config);
+
     /// @brief Send a packet from the defined interface.
     /// @param packet The packet to send.
     void send_packet(pcpp::Packet *packet);

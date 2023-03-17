@@ -582,3 +582,8 @@ pcpp::MacAddress packet_analyzer::get_current_device_hw_address()
 {
     return this->m_device->getMacAddress();
 }
+
+void packet_analyzer::get_monitor_ssh_config(ssh_config &ssh_config)
+{
+    ssh_config = this->ssh_configuration;
+}
