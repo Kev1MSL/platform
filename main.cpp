@@ -13,7 +13,7 @@ int main(int argc, char *argv[])
             ("a,adhoc_setup", "Change the Raspberry PI network settings to ad-hoc mode",
              cxxopts::value<std::vector<std::string>>(),
              "<ssid> <ip> <number of channels>")
-            ("r,adhoc_reset",
+            ("adhoc_reset",
              "Reset the Raspberry PI network settings to default")
             ("m,monitor_setup", "Set up the interface into monitor mode", cxxopts::value<std::string>(),
              "<interface>")
@@ -22,7 +22,7 @@ int main(int argc, char *argv[])
              cxxopts::value<bool>(),
              "<option>");
     options.add_options("Packet analysis")
-            ("P,print", "Print info for an interface", cxxopts::value<std::string>(), "<interface>")
+            ("print", "Print info for an interface", cxxopts::value<std::string>(), "<interface>")
             ("C,capture", "Capture packets on an interface",
              cxxopts::value<std::string>(), "<interface>")
             ("l,launch", "Launch ping experiment", cxxopts::value<std::string>(),
@@ -43,6 +43,10 @@ int main(int argc, char *argv[])
              "Run command on all the Raspberry PIs",
              cxxopts::value<std::vector<std::string>>(),
              "<interface to use> <command>")
+            ("r,run-single", "Run a command on a single Raspberry Pi", cxxopts::value<std::vector<std::string>>(),
+             "<interface to use> <ip> \"<command>\"")
+            ("P,run-platform", "Run a platform command on a single Raspberry Pi",
+             cxxopts::value<std::vector<std::string>>(), "<interface to use> <ip> \"<platform command>\"")
             ("T,ntp", "Set the Raspberry PI ntp server", cxxopts::value<std::string>(),
              "<interface to use> <ntp server ip>");
     options.add_options("List of configuration")
@@ -321,6 +325,93 @@ int main(int argc, char *argv[])
             } else
             {
                 std::cout << "Command successfully propagated on " << i.host << std::endl;
+            }
+        }
+    }
+
+    if (result.count("run-single"))
+    {
+        std::cout << "-- Run a command on a single Raspberry PI --" << std::endl
+                  << std::endl;
+        std::string iface = result["run-single"].as<std::vector<std::string>>()[0];
+        const std::vector<std::string> &unmatched = result.unmatched();
+        if (unmatched.size() != 2)
+        {
+            std::cout << "ERROR: Missing arguments." << std::endl;
+            std::cout << "Usage: " << argv[0] << " --run-single <interface to use> <ip> \"<command>\"" << std::endl;
+            exit(1);
+        }
+        std::string ip = unmatched[0];
+        std::string command;
+        for (int i = 1; i < unmatched.size(); i++)
+        {
+            command += unmatched[i] + " ";
+        }
+        std::vector<ssh_config>
+                config = get_ssh_config();
+        if (config.empty())
+        {
+            std::cout << "ERROR: Unable to get the configuration of the Raspberry PI." << std::endl;
+            exit(1);
+        }
+        for (auto &i: config)
+        {
+            if (i.host == ip)
+            {
+                std::cout << "Begin to run command on " << i.host << std::endl;
+                ssh_updater updater = ssh_updater(i);
+                if (updater.run_command(command) != 0)
+                {
+                    std::cout << "ERROR: Unable to propagate run command on " << i.host << std::endl;
+                } else
+                {
+                    std::cout << "Command successfully propagated on " << i.host << std::endl;
+                }
+                return 0;
+            }
+        }
+    }
+
+    if (result.count("run-platform"))
+    {
+        std::cout << "-- Run a platform command on a single Raspberry Pi --" << std::endl
+                  << std::endl;
+        std::string iface = result["run-platform"].as<std::vector<std::string>>()[0];
+        const std::vector<std::string> &unmatched = result.unmatched();
+        if (unmatched.size() != 2)
+        {
+            std::cout << "ERROR: Missing arguments." << std::endl;
+            std::cout << "Usage: " << argv[0] << " --run-platform <interface to use> <ip> \"<command>\"" << std::endl;
+            exit(1);
+        }
+        const std::string &ip = unmatched[0];
+        std::string path = PATH;
+        std::string command = "sudo ." + path + " ";
+        for (int i = 1; i < unmatched.size(); i++)
+        {
+            command += unmatched[i] + " ";
+        }
+        std::vector<ssh_config>
+                config = get_ssh_config();
+        if (config.empty())
+        {
+            std::cout << "ERROR: Unable to get the configuration of the Raspberry PI." << std::endl;
+            exit(1);
+        }
+        for (auto &i: config)
+        {
+            if (i.host == ip)
+            {
+                std::cout << "Begin to run command on " << i.host << std::endl;
+                ssh_updater updater = ssh_updater(i);
+                if (updater.run_command(command) != 0)
+                {
+                    std::cout << "ERROR: Unable to propagate run command on " << i.host << std::endl;
+                } else
+                {
+                    std::cout << "Command successfully propagated on " << i.host << std::endl;
+                }
+                return 0;
             }
         }
     }
